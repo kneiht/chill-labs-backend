@@ -1,0 +1,29 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+opencode.json
+
+
+# Output
+build
+dist
+
+
+# Env
+.env
+.env.*
+
+# Rust
+target
+.sqlx
+
+# Images
+scripts/english-coaching-image.tar.gz
+scripts/static-files.tar.gz
+
+
+# Private files and folders
+\#*

@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: english-coaching-postgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    # Consider removing port exposure if direct host access isn't needed
+    # ports:
+    #   - "${POSTGRES_PORT:-5432}:5432" # Use variable with default
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app_network
+
+  english-coaching:
+    image: english-coaching:latest
+    container_name: english-coaching
+    # Không cần expose port 3000 ra ngoài nữa vì Caddy sẽ làm proxy
+    # ports:
+    #   - "3000:3000"
+    expose:
+      - "${ENGLISH_COACHING__SERVER__PORT:-3000}" # Use variable with default
+    env_file:
+      - .env
+    environment:
+      # Pass through relevant variables from .env
+      - RUST_LOG=${RUST_LOG}
+      - ENGLISH_COACHING__SERVER__HOST=${ENGLISH_COACHING__SERVER__HOST}
+      - ENGLISH_COACHING__SERVER__PORT=${ENGLISH_COACHING__SERVER__PORT}
+      - ENGLISH_COACHING__JWT__SECRET=${ENGLISH_COACHING__JWT__SECRET}
+      - ENGLISH_COACHING__JWT__EXPIRATION_HOURS=${ENGLISH_COACHING__JWT__EXPIRATION_HOURS}
+      - ENGLISH_COACHING__DATABASE__URL=${ENGLISH_COACHING__DATABASE__URL}
+      - ENGLISH_COACHING__DATABASE__MIGRATE_ON_STARTUP=${ENGLISH_COACHING__DATABASE__MIGRATE_ON_STARTUP}
+      - ENGLISH_COACHING__LOGGING__LOG_LEVEL=${ENGLISH_COACHING__LOGGING__LOG_LEVEL}
+      - ENGLISH_COACHING__LOGGING__LOG_FORMAT=${ENGLISH_COACHING__LOGGING__LOG_FORMAT}
+      - DATABASE_URL=${DATABASE_URL}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # If you need volume for data storage, uncomment the line below
+    # volumes:
+    #   - ./data:/app/data
+    networks:
+      - app_network
+
+  caddy:
+    image: caddy:2
+    container_name: caddy
+    env_file:
+      - .env
+    ports:
+      - "80:80"   # Standard HTTP port
+      - "443:443"  # Standard HTTPS port
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+      - ./static:/srv
+    environment:
+      - DOMAIN=${DOMAIN:-coaching.chillteacher.com}
+    depends_on:
+      - english-coaching
+    restart: unless-stopped
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
