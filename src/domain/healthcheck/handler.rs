@@ -1,11 +1,6 @@
-use axum::Json;
-use serde::Serialize;
+use crate::domain::response::{SuccessType, UseCaseResponse};
+use serde_json::json;
 
-#[derive(Serialize)]
-pub struct HealthResponse {
-    pub status: &'static str,
-}
-
-pub async fn healthcheck() -> Json<HealthResponse> {
-    Json(HealthResponse { status: "ok" })
+pub async fn healthcheck() -> UseCaseResponse<serde_json::Value> {
+    UseCaseResponse::success_ok(json!({"status": "ok"}), "Health check successful")
 }
