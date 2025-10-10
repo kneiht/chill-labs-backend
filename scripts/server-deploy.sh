@@ -60,7 +60,7 @@ else
 fi
 
 
-echo -e "${BLUE}=== SCRIPT DEPLOY BACKEND ===${NC}"
+echo -e "${BLUE}=== BACKEND DEPLOY SCRIPT ===${NC}"
 echo -e "${YELLOW}Server IP: ${SERVER_IP}${NC}"
 echo -e "${YELLOW}Username: ${USERNAME}${NC}"
 echo -e "${YELLOW}SSH Port: ${SSH_PORT}${NC}"
@@ -69,7 +69,7 @@ echo -e "${YELLOW}Remote Directory: ${REMOTE_DIR}${NC}"
 echo ""
 
 
-# Tạo thư mục trên server
+# Create directories on server
 echo -e "${BLUE}Creating directories on server...${NC}"
 $SSH_CMD "mkdir -p $REMOTE_DIR && mkdir -p $REMOTE_DIR/static"
 
@@ -106,55 +106,55 @@ echo -e "${GREEN}✓ Directories created successfully!${NC}"
 
 
 
-# Hỏi người dùng có build image không
-read -p "Bạn có muốn build và copy Docker image lên server không? (y/n): " BUILD_IMAGE
+# Ask user if they want to build image
+read -p "Do you want to build and copy Docker image to server? (y/n): " BUILD_IMAGE
 if [[ "$BUILD_IMAGE" =~ ^[Yy]$ ]]; then
 
     # Step 1: Build Docker image
-    echo -e "${BLUE}Build Docker image...${NC}"
+    echo -e "${BLUE}Building Docker image...${NC}"
     docker build -t english-coaching:latest -f scripts/Dockerfile .
 
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Lỗi khi build Docker image!${NC}"
+        echo -e "${RED}Error building Docker image!${NC}"
         exit 1
     fi
-    echo -e "${GREEN}✓ Build Docker image thành công!${NC}"
+    echo -e "${GREEN}✓ Docker image built successfully!${NC}"
 
     # Step 2: Save Docker image to file
-    echo -e "${BLUE}Save Docker image to file...${NC}"
+    echo -e "${BLUE}Saving Docker image to file...${NC}"
     cd scripts &&  docker save english-coaching:latest | gzip > english-coaching-image.tar.gz
 
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Lỗi khi lưu Docker image!${NC}"
+        echo -e "${RED}Error saving Docker image!${NC}"
         exit 1
     fi
-    echo -e "${GREEN}✓ Lưu Docker image thành công!${NC}"
+    echo -e "${GREEN}✓ Docker image saved successfully!${NC}"
 
     $SCP_CMD english-coaching-image.tar.gz $USERNAME@$SERVER_IP:$REMOTE_DIR/
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Lỗi khi copy file Docker image lên server!${NC}"
+        echo -e "${RED}Error copying Docker image file to server!${NC}"
         exit 1
     fi
-    echo -e "${GREEN}✓ Copy Docker image thành công!${NC}"
+    echo -e "${GREEN}✓ Docker image copied successfully!${NC}"
     cd ..
 fi
 
 
 
 
-# Tạo script cài đặt trên server
-echo -e "${BLUE}Setup script cài đặt trên server...${NC}"
+# Set up installation script on server
+echo -e "${BLUE}Setting up installation script on server...${NC}"
 $SSH_CMD "chmod +x $REMOTE_DIR/setup-server.sh"
 
-# Chạy script cài đặt trên server
-echo -e "${BLUE}Chạy script cài đặt trên server...${NC}"
+# Run installation script on server
+echo -e "${BLUE}Running installation script on server...${NC}"
 $SSH_CMD "cd $REMOTE_DIR && ./setup-server.sh"
 
 if [ $? -ne 0 ]; then
-    echo -e "${RED}Lỗi khi chạy script cài đặt!${NC}"
+    echo -e "${RED}Error running installation script!${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Cài đặt trên server thành công!${NC}"
+echo -e "${GREEN}✓ Installation on server successful!${NC}"
 
 
 
@@ -164,7 +164,7 @@ echo -e "${BLUE}Checking status of containers...${NC}"
 $SSH_CMD "cd $REMOTE_DIR && docker-compose ps"
 
 # Check logs of app container
-echo -e "${BLUE}Check logs of backend ${APP_CONTAINER_NAME} container...${NC}"
+echo -e "${BLUE}Checking logs of backend ${APP_CONTAINER_NAME} container...${NC}"
 $SSH_CMD "cd $REMOTE_DIR && docker logs ${APP_CONTAINER_NAME} 2>&1 | tail -n 20"
 
 # Check logs of caddy container
@@ -183,8 +183,8 @@ ssh $SSH_OPTS -p $SSH_PORT -O exit $USERNAME@$SERVER_IP
 
 echo -e "${GREEN}=== DEPLOY COMPLETED SUCCESSFULLY! ===${NC}"
 echo -e "${YELLOW}Application is running at:${NC}"
-echo -e "${YELLOW}- HTTP: http://${SERVER_IP} (sẽ tự động chuyển hướng sang HTTPS)${NC}"
-echo -e "${YELLOW}- HTTPS: https://${SERVER_IP} (Caddy sẽ tự động lấy SSL certificates)${NC}"
+echo -e "${YELLOW}- HTTP: http://${SERVER_IP} (will automatically redirect to HTTPS)${NC}"
+echo -e "${YELLOW}- HTTPS: https://${SERVER_IP} (Caddy will automatically obtain SSL certificates)${NC}"
 echo -e "${YELLOW}- Domain: https://${DOMAIN} (after configuring DNS to point to ${SERVER_IP})${NC}"
 echo -e "${YELLOW}To check status, run: ssh -p $SSH_PORT $USERNAME@$SERVER_IP \"cd ${REMOTE_DIR} && docker-compose ps\"${NC}"
 echo -e "${YELLOW}To view logs, run: ssh -p $SSH_PORT $USERNAME@$SERVER_IP \"cd ${REMOTE_DIR} && docker-compose logs\"${NC}"
