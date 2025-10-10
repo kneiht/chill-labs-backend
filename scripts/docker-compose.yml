@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: english-coaching-postgres
+    container_name: ${APP_CONTAINER_NAME}-postgres
     env_file:
       - .env
     environment:
@@ -22,35 +22,43 @@ services:
     networks:
       - app_network
 
-  english-coaching:
-    image: english-coaching:latest
-    container_name: english-coaching
+  app-backend:
+    image: ${APP_CONTAINER_NAME}:latest
+    container_name: ${APP_CONTAINER_NAME}
     # Không cần expose port 3000 ra ngoài nữa vì Caddy sẽ làm proxy
     # ports:
     #   - "3000:3000"
     expose:
-      - "${ENGLISH_COACHING__SERVER__PORT:-3000}" # Use variable with default
+      - ${APP__SERVER__PORT:-3000} # Use variable with default
+    build:
+      context: .
+      args:
+        BACKEND_DIR: ${BACKEND_DIR}
+        APP_NAME: ${APP_NAME}
+        PORT: ${PORT}
     env_file:
       - .env
     environment:
       # Pass through relevant variables from .env
       - RUST_LOG=${RUST_LOG}
-      - ENGLISH_COACHING__SERVER__HOST=${ENGLISH_COACHING__SERVER__HOST}
-      - ENGLISH_COACHING__SERVER__PORT=${ENGLISH_COACHING__SERVER__PORT}
-      - ENGLISH_COACHING__JWT__SECRET=${ENGLISH_COACHING__JWT__SECRET}
-      - ENGLISH_COACHING__JWT__EXPIRATION_HOURS=${ENGLISH_COACHING__JWT__EXPIRATION_HOURS}
-      - ENGLISH_COACHING__DATABASE__URL=${ENGLISH_COACHING__DATABASE__URL}
-      - ENGLISH_COACHING__DATABASE__MIGRATE_ON_STARTUP=${ENGLISH_COACHING__DATABASE__MIGRATE_ON_STARTUP}
-      - ENGLISH_COACHING__LOGGING__LOG_LEVEL=${ENGLISH_COACHING__LOGGING__LOG_LEVEL}
-      - ENGLISH_COACHING__LOGGING__LOG_FORMAT=${ENGLISH_COACHING__LOGGING__LOG_FORMAT}
+      - ATLAS_ENV=${ATLAS_ENV}
+      - APP__SERVER__ENV=${APP__SERVER__ENV}
+      - APP__SERVER__HOST=${APP__SERVER__HOST}
+      - APP__SERVER__PORT=${APP__SERVER__PORT}
+      - APP__JWT__SECRET=${APP__JWT__SECRET}
+      - APP__JWT__EXPIRATION_HOURS=${APP__JWT__EXPIRATION_HOURS}
+      - APP__DATABASE__URL=${APP__DATABASE__URL}
+      - APP__DATABASE__MIGRATE_ON_STARTUP=${APP__DATABASE__MIGRATE_ON_STARTUP}
+      - APP__LOGGING__LOG_LEVEL=${APP__LOGGING__LOG_LEVEL}
+      - APP__LOGGING__LOG_FORMAT=${APP__LOGGING__LOG_FORMAT}
       - DATABASE_URL=${DATABASE_URL}
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    # If you need volume for data storage, uncomment the line below
-    # volumes:
-    #   - ./data:/app/data
+     # If you need volume for data storage, uncomment the line below
+     # volumes:
+     #   - ./data:/app/data
     networks:
       - app_network
 
@@ -68,9 +76,9 @@ services:
       - ./caddy_config:/config
       - ./static:/srv
     environment:
-      - DOMAIN=${DOMAIN:-coaching.chillteacher.com}
+      - DOMAIN=${DOMAIN}
     depends_on:
-      - english-coaching
+      - app-backend
     restart: unless-stopped
     networks:
       - app_network

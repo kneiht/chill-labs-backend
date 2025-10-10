@@ -112,7 +112,7 @@ if [[ "$BUILD_IMAGE" =~ ^[Yy]$ ]]; then
 
     # Step 1: Build Docker image
     echo -e "${BLUE}Building Docker image...${NC}"
-    docker build -t english-coaching:latest -f scripts/Dockerfile .
+    docker build -t $APP_CONTAINER_NAME:latest --build-arg BACKEND_DIR=$BACKEND_DIR --build-arg APP_NAME=$APP_CONTAINER_NAME --build-arg PORT=$APP__SERVER__PORT -f scripts/Dockerfile .
 
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error building Docker image!${NC}"
@@ -122,7 +122,7 @@ if [[ "$BUILD_IMAGE" =~ ^[Yy]$ ]]; then
 
     # Step 2: Save Docker image to file
     echo -e "${BLUE}Saving Docker image to file...${NC}"
-    cd scripts &&  docker save english-coaching:latest | gzip > english-coaching-image.tar.gz
+    cd scripts &&  docker save $APP_CONTAINER_NAME:latest | gzip > ${APP_CONTAINER_NAME}-image.tar.gz
 
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error saving Docker image!${NC}"
