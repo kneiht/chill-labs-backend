@@ -1,0 +1,7 @@
+ [
+   {
+     "label": "GET /api/healthcheck",
+     "method": "GET",
+     "path": "/api/healthcheck"
+   }
+ ]
