@@ -1,6 +1,14 @@
 #!/bin/bash
+
+# Source .env if it exists
+if [ -f ".env" ]; then
+    set -o allexport
+    source .env
+    set +o allexport
+fi
+
 # Set working directory
-cd /opt/english-coaching
+cd $REMOTE_DIR
 
 # Install Docker if not already installed
 if ! command -v docker &> /dev/null; then
@@ -115,7 +123,7 @@ docker-compose down
 
     # Load new Docker image
     echo "Loading new Docker image..."
-    docker load < english-coaching-image.tar.gz
+    docker load < ${APP_CONTAINER_NAME}-image.tar.gz
 
 # Create directories for Caddy and PostgreSQL
 echo "Creating directories for Caddy and PostgreSQL..."
@@ -136,16 +144,16 @@ docker-compose ps
     # Check PostgreSQL connection
     echo "Checking PostgreSQL connection..."
     sleep 5 # Wait for PostgreSQL to start
-    docker exec english-coaching-postgres pg_isready -U postgres
+    docker exec ${APP_CONTAINER_NAME}-postgres pg_isready -U $POSTGRES_USER
 if [ $? -ne 0 ]; then
     echo "Error connecting to PostgreSQL!"
 else
     echo "PostgreSQL connection successful!"
 fi
 
-    # Check logs of english-coaching container
-    echo "Checking logs of english-coaching container..."
-    docker logs english-coaching
+# Check logs of ${APP_CONTAINER_NAME} container
+echo "Checking logs of ${APP_CONTAINER_NAME} container..."
+docker logs $APP_CONTAINER_NAME
 
 # Clean up unused (dangling) images
 echo "Cleaning up old images..."

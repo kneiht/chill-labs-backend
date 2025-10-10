@@ -313,10 +313,9 @@ show_backend_menu() {
             "Start DB (dev) & Apply Migrations"
             "Start DB (test) & Apply Migrations"
             "SQLx Prepare (for offline mode)"
-            "Back to Main Menu"
         )
         COLUMNS=1 # Ensure select options are listed vertically
-        PS3="Backend action? "
+        PS3="Backend action? (0: Exit) "
         select opt in "${options[@]}"; do
             case $REPLY in
                 1) backend_serve; break ;;
@@ -325,7 +324,7 @@ show_backend_menu() {
                 4) backend_start_db; break ;;
                 5) backend_start_db_test; break ;;
                 7) backend_sqlx_prepare; break ;;
-                $((${#options[@]}))) return ;;
+                0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac
         done
@@ -343,10 +342,9 @@ show_db_menu() {
             "SQLx: Apply pending migrations (DEV DB)"
             "SQLx: Apply pending migrations (TEST DB)"
             "Atlas: Show migration status"
-            "Back to Main Menu"
         )
         COLUMNS=1
-        PS3="Database action? "
+        PS3="Database action? (0: Exit) "
         select opt in "${options[@]}"; do
             case $REPLY in
                 1) db_atlas_hash; break ;;
@@ -355,7 +353,7 @@ show_db_menu() {
                 4) db_apply; break ;;
                 5) db_apply_test; break ;;
                 6) db_atlas_status; break ;;
-                $((${#options[@]}))) return ;;
+                0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac
         done
@@ -372,10 +370,9 @@ show_deploy_menu() {
             "Deploy backend application"
             "Deploy static frontend files"
             "Run full deployment setup (key, copy, test, app)"
-            "Back to Main Menu"
         )
         COLUMNS=1
-        PS3="Deployment action? "
+        PS3="Deployment action? (0: Exit) "
         select opt in "${options[@]}"; do
             case $REPLY in
                 1) deploy_generate_key; break ;;
@@ -384,7 +381,7 @@ show_deploy_menu() {
                 4) deploy_app; break ;;
                 5) deploy_static; break ;;
                 6) deploy_setup; break ;;
-                $((${#options[@]}))) return ;;
+                0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac
         done
@@ -400,10 +397,9 @@ show_tools_menu() {
             "Clean unused Rust build artifacts (cargo-sweep)"
             "Clean (backend + optional frontend node_modules)"
             "Clean Force (backend + frontend node_modules)"
-            "Back to Main Menu"
         )
         COLUMNS=1
-        PS3="Tool/Cleanup action? "
+        PS3="Tool/Cleanup action? (0: Exit) "
         select opt in "${options[@]}"; do
             case $REPLY in
                 1) tools_install_sweep; break ;;
@@ -411,7 +407,7 @@ show_tools_menu() {
                 3) tools_clean_cargo; break ;;
                 4) clean_normal; break ;;
                 5) clean_force; break ;;
-                $((${#options[@]}))) return ;;
+                0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac
         done
@@ -431,7 +427,6 @@ main_menu() {
             "Database (Atlas & SQLx)"
             "Deployment"
             "Tools & Cleanup"
-            "Quit"
         )
         select opt in "${main_options[@]}"; do
             # Check if REPLY is 'q' or 'Q' for quitting, in addition to the numbered option
@@ -442,10 +437,10 @@ main_menu() {
             case $REPLY in
                 1) setup_scripts; break ;;
                 2) show_backend_menu; break ;;
-                4) show_db_menu; break ;;
-                5) show_deploy_menu; break ;;
-                6) show_tools_menu; break ;;
-                $((${#main_options[@]}))) echo -e "${GREEN}Exiting EnglishCoaching CLI. Goodbye!${NC}"; exit 0 ;;
+                3) show_db_menu; break ;;
+                4) show_deploy_menu; break ;;
+                5) show_tools_menu; break ;;
+                0) echo -e "${GREEN}Exiting EnglishCoaching CLI. Goodbye!${NC}"; exit 0 ;;
                 *) echo -e "${RED}Invalid option $REPLY. Type 'q' or the number of 'Quit' to exit.${NC}" ;;
             esac
         done

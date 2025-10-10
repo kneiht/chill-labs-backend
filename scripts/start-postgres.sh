@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Source .env if it exists
+if [ -f ".env" ]; then
+    set -o allexport
+    source .env
+    set +o allexport
+fi
+
 # Set colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -8,11 +15,11 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # --- Configuration ---
-CONTAINER_NAME="chillteacher-postgres"
-TEST_CONTAINER_NAME="chillteacher-postgres-test"
-VOLUME_NAME="chillteacher_postgres_data"
-TEST_VOLUME_NAME="chillteacher_postgres_data_test"
-BACKUP_DIR="./backend/database/backups" # Define a directory for backups
+CONTAINER_NAME="${APP_CONTAINER_NAME}-postgres"
+TEST_CONTAINER_NAME="${APP_CONTAINER_NAME}-postgres-test"
+VOLUME_NAME="${APP_CONTAINER_NAME}_postgres_data"
+TEST_VOLUME_NAME="${APP_CONTAINER_NAME}_postgres_data_test"
+BACKUP_DIR="$BACKEND_DIR/database/backups" # Define a directory for backups
 
 # --- Script Mode ---
 SCRIPT_MODE="development" # Default to development
