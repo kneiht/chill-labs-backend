@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n             SELECT id, display_name, email, role, status, created, updated\n             FROM users ORDER BY created DESC\n             ",
+  "query": "\n              SELECT id, display_name, email, password_hash, role, status, created, updated\n              FROM users ORDER BY created DESC\n              ",
   "describe": {
     "columns": [
       {
@@ -20,21 +20,26 @@
       },
       {
         "ordinal": 3,
-        "name": "role",
+        "name": "password_hash",
         "type_info": "Text"
       },
       {
         "ordinal": 4,
-        "name": "status",
+        "name": "role",
         "type_info": "Text"
       },
       {
         "ordinal": 5,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
         "name": "created",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "updated",
         "type_info": "Timestamptz"
       }
@@ -49,8 +54,9 @@
       false,
       false,
       false,
+      false,
       false
     ]
   },
-  "hash": "26407eddf21800d4a17ce916e329db2cf6e02100c86d20e7448dfa7076c61be2"
+  "hash": "79d509a9118e4faa552459325d8b1e70ec37b2fa649de038a993055b6cbb2732"
 }
