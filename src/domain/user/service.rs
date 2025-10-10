@@ -1,5 +1,6 @@
 use super::model::{Role, User, UserStatus};
 use super::repository::UserRepository;
+use crate::utils::password::verify_password;
 use anyhow::{anyhow, Result};
 use uuid::Uuid;
 
@@ -13,14 +14,31 @@ impl UserService {
         Self { repository }
     }
 
-    pub async fn create_user(&self, display_name: String, email: String, role: Role) -> Result<User> {
+    pub async fn create_user(
+        &self,
+        display_name: String,
+        email: String,
+        password_hash: String,
+        role: Role,
+    ) -> Result<User> {
         // Check if email already exists
         if self.repository.find_by_email(&email).await?.is_some() {
             return Err(anyhow!("Email already exists"));
         }
 
-        let user = User::new(display_name, email, role);
+        let user = User::new(display_name, email, password_hash, role);
         self.repository.create(&user).await
+    }
+
+    pub async fn create_user_with_password(
+        &self,
+        display_name: String,
+        email: String,
+        password_hash: String,
+        role: Role,
+    ) -> Result<User> {
+        self.create_user(display_name, email, password_hash, role)
+            .await
     }
 
     pub async fn get_user_by_id(&self, id: Uuid) -> Result<User> {
@@ -37,11 +55,28 @@ impl UserService {
             .ok_or_else(|| anyhow!("User not found"))
     }
 
+    pub async fn authenticate_user(&self, email: &str, password: &str) -> Result<User> {
+        let user = self.get_user_by_email(email).await?;
+
+        if !verify_password(password, &user.password_hash)? {
+            return Err(anyhow!("Invalid password"));
+        }
+
+        Ok(user)
+    }
+
     pub async fn get_all_users(&self) -> Result<Vec<User>> {
         self.repository.find_all().await
     }
 
-    pub async fn update_user(&self, id: Uuid, display_name: Option<String>, email: Option<String>, role: Option<Role>, status: Option<UserStatus>) -> Result<User> {
+    pub async fn update_user(
+        &self,
+        id: Uuid,
+        display_name: Option<String>,
+        email: Option<String>,
+        role: Option<Role>,
+        status: Option<UserStatus>,
+    ) -> Result<User> {
         let mut user = self.get_user_by_id(id).await?;
 
         if let Some(display_name) = display_name {
@@ -78,4 +113,3 @@ impl UserService {
         Ok(())
     }
 }
-

@@ -1,7 +1,9 @@
 mod domain;
+mod middleware;
 mod server;
 mod settings;
 mod state;
+mod utils;
 
 use dotenv::dotenv;
 use settings::Settings;

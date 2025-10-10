@@ -15,22 +15,23 @@ impl UserRepository {
 
     pub async fn create(&self, user: &User) -> Result<User> {
         let result = sqlx::query_as!(
-            UserRow,
-            r#"
-             INSERT INTO users (id, display_name, email, role, status, created, updated)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
-             RETURNING id, display_name, email, role, status, created, updated
-             "#,
-            user.id,
-            user.display_name,
-            user.email,
-            format!("{:?}", user.role),
-            format!("{:?}", user.status),
-            user.created,
-            user.updated
-        )
-        .fetch_one(&self.pool)
-        .await?;
+             UserRow,
+             r#"
+              INSERT INTO users (id, display_name, email, password_hash, role, status, created, updated)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              RETURNING id, display_name, email, password_hash, role, status, created, updated
+              "#,
+             user.id,
+             user.display_name,
+             user.email,
+             user.password_hash,
+             format!("{:?}", user.role),
+             format!("{:?}", user.status),
+             user.created,
+             user.updated
+         )
+         .fetch_one(&self.pool)
+         .await?;
 
         Ok(result.into())
     }
@@ -39,9 +40,9 @@ impl UserRepository {
         let user = sqlx::query_as!(
             UserRow,
             r#"
-             SELECT id, display_name, email, role, status, created, updated
-             FROM users WHERE id = $1
-             "#,
+              SELECT id, display_name, email, password_hash, role, status, created, updated
+              FROM users WHERE id = $1
+              "#,
             id
         )
         .fetch_optional(&self.pool)
@@ -54,9 +55,9 @@ impl UserRepository {
         let user = sqlx::query_as!(
             UserRow,
             r#"
-             SELECT id, display_name, email, role, status, created, updated
-             FROM users WHERE email = $1
-             "#,
+              SELECT id, display_name, email, password_hash, role, status, created, updated
+              FROM users WHERE email = $1
+              "#,
             email
         )
         .fetch_optional(&self.pool)
@@ -69,9 +70,9 @@ impl UserRepository {
         let users = sqlx::query_as!(
             UserRow,
             r#"
-             SELECT id, display_name, email, role, status, created, updated
-             FROM users ORDER BY created DESC
-             "#
+              SELECT id, display_name, email, password_hash, role, status, created, updated
+              FROM users ORDER BY created DESC
+              "#
         )
         .fetch_all(&self.pool)
         .await?;
@@ -81,22 +82,23 @@ impl UserRepository {
 
     pub async fn update(&self, user: &User) -> Result<User> {
         let result = sqlx::query_as!(
-            UserRow,
-            r#"
-             UPDATE users
-             SET display_name = $2, email = $3, role = $4, status = $5, updated = $6
-             WHERE id = $1
-             RETURNING id, display_name, email, role, status, created, updated
-             "#,
-            user.id,
-            user.display_name,
-            user.email,
-            format!("{:?}", user.role),
-            format!("{:?}", user.status),
-            user.updated
-        )
-        .fetch_one(&self.pool)
-        .await?;
+             UserRow,
+             r#"
+              UPDATE users
+              SET display_name = $2, email = $3, password_hash = $4, role = $5, status = $6, updated = $7
+              WHERE id = $1
+              RETURNING id, display_name, email, password_hash, role, status, created, updated
+              "#,
+             user.id,
+             user.display_name,
+             user.email,
+             user.password_hash,
+             format!("{:?}", user.role),
+             format!("{:?}", user.status),
+             user.updated
+         )
+         .fetch_one(&self.pool)
+         .await?;
 
         Ok(result.into())
     }

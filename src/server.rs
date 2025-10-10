@@ -1,11 +1,18 @@
 use anyhow::Context;
 use axum::http::Method;
-use axum::{routing::{get, post, put, delete}, Router};
+use axum::{
+    routing::{delete, get, post, put},
+    Router,
+};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::domain::auth::handler::{login, register};
 use crate::domain::healthcheck::handler::healthcheck;
-use crate::domain::user::handler::{create_user, get_user, get_all_users, update_user, delete_user};
+use crate::domain::user::handler::{
+    create_user, delete_user, get_all_users, get_user, update_user,
+};
+use crate::middleware::auth::AuthUser;
 use crate::state::AppState;
 
 pub async fn serve(state: &AppState) -> anyhow::Result<()> {
@@ -21,9 +28,18 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         ])
         .allow_headers(Any);
 
+    // Public routes
+    let public_routes = Router::new()
+        .route("/api/healthcheck", get(healthcheck))
+        .route("/api/auth/login", post(login))
+        .route("/api/auth/register", post(register))
+        .route("/api/users", post(create_user));
+
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
+        .route("/api/auth/login", post(login))
+        .route("/api/auth/register", post(register))
         .route("/api/users", post(create_user))
         .route("/api/users", get(get_all_users))
         .route("/api/users/{id}", get(get_user))
