@@ -368,7 +368,6 @@ show_deploy_menu() {
             "Copy SSH public key to server"
             "Test SSH connection to server"
             "Deploy backend application"
-            "Deploy static frontend files"
             "Run full deployment setup (key, copy, test, app)"
         )
         COLUMNS=1
@@ -379,8 +378,7 @@ show_deploy_menu() {
                 2) deploy_copy_key; break ;;
                 3) deploy_test_conn; break ;;
                 4) deploy_app; break ;;
-                5) deploy_static; break ;;
-                6) deploy_setup; break ;;
+                5) deploy_setup; break ;;
                 0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac
