@@ -112,7 +112,7 @@ if [[ "$BUILD_IMAGE" =~ ^[Yy]$ ]]; then
 
     # Step 1: Build Docker image
     echo -e "${BLUE}Building Docker image...${NC}"
-    docker build -t $APP_CONTAINER_NAME:latest --build-arg BACKEND_DIR=$BACKEND_DIR --build-arg APP_NAME=$APP_CONTAINER_NAME --build-arg PORT=$APP__SERVER__PORT -f scripts/Dockerfile .
+    docker build -t $APP_CONTAINER_NAME:latest --build-arg BACKEND_DIR=$BACKEND_DIR --build-arg APP_NAME=$APP_CONTAINER_NAME --build-arg PORT=$APP_PORT -f scripts/Dockerfile .
 
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error building Docker image!${NC}"
@@ -160,24 +160,29 @@ echo -e "${GREEN}✓ Installation on server successful!${NC}"
 
 
 # Check status of containers
+echo
 echo -e "${BLUE}Checking status of containers...${NC}"
 $SSH_CMD "cd $REMOTE_DIR && docker-compose ps"
 
 # Check logs of app container
+echo
 echo -e "${BLUE}Checking logs of backend ${APP_CONTAINER_NAME} container...${NC}"
 $SSH_CMD "cd $REMOTE_DIR && docker logs ${APP_CONTAINER_NAME} 2>&1 | tail -n 20"
 
 # Check logs of caddy container
-# echo -e "${BLUE}Checking logs of caddy container...${NC}"
-# $SSH_CMD "cd $REMOTE_DIR && docker logs caddy 2>&1 | tail -n 20"
+echo
+echo -e "${BLUE}Checking logs of caddy container...${NC}"
+$SSH_CMD "cd $REMOTE_DIR && docker logs caddy 2>&1 | tail -n 20"
 
 # Cleanup
+echo
 echo -e "${BLUE}Cleanup...${NC}"
 # rm -rf ./scripts/english-coaching-image.tar.gz
 # rm -rf ./scripts/static-files.tar.gz
 docker image prune -f
 
 # Close SSH Control Master connection
+echo
 echo -e "${BLUE}Closing SSH connection...${NC}"
 ssh $SSH_OPTS -p $SSH_PORT -O exit $USERNAME@$SERVER_IP
 

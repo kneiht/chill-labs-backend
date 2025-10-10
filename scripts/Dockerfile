@@ -6,7 +6,7 @@ FROM rust:1.86-bullseye AS builder
 # Use environment variables for customization
 ARG BACKEND_DIR
 ARG APP_NAME
-ARG PORT=3000
+ARG APP_PORT=3000
 
 # Install necessary tools
 RUN apt-get update -y \
@@ -34,7 +34,7 @@ FROM debian:bookworm-slim AS runtime
 # Use environment variables for customization
 ARG BACKEND_DIR
 ARG APP_NAME
-ARG PORT=3000
+ARG APP_PORT=3000
 
 WORKDIR /app
 RUN apt-get update -y \
@@ -55,7 +55,7 @@ COPY --from=builder /app/$BACKEND_DIR/Cargo.toml /app/
 # Copy static files if needed
 COPY --from=builder /app/$BACKEND_DIR/static /app/static
 
-EXPOSE $PORT
+EXPOSE $APP_PORT
 
 # Run the server
 CMD ["/app/$APP_NAME"]

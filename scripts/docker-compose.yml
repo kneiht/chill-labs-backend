@@ -34,8 +34,8 @@ services:
       context: .
       args:
         BACKEND_DIR: ${BACKEND_DIR}
-        APP_NAME: ${APP_NAME}
-        PORT: ${PORT}
+        APP_NAME: ${APP_CONTAINER_NAME}
+        APP_PORT: ${APP_PORT}
     env_file:
       - .env
     environment:
