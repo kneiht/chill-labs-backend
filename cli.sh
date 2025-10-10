@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# english-coaching-cli.sh
-# CLI tool for managing the EnglishCoaching project
-
 # --- Configuration ---
 # Source .env if it exists and export variables
 if [ -f ".env" ]; then
@@ -13,14 +10,26 @@ if [ -f ".env" ]; then
     set +o allexport
 else
     echo -e "\033[1;33mWarning: .env file not found. Some commands might not work as expected.\033[0m"
-    echo -e "\033[1;33mPlease ensure DATABASE_URL, DATABASE_URL_TEST, etc., are set if needed.\033[0m"
 fi
 
-# Directories
-BACKEND_DIR="./backend"
-FRONTEND_DIR="./frontend"
-SCRIPTS_DIR="./scripts"
-DATABASE_DIR="$BACKEND_DIR/database"
+# Warning: make sure to set the correct values in .env
+echo -e "\033[1;33mWarning: Please ensure all variables are set in .env file.\033[0m"
+
+read -p "Have you set all variables in .env file? (y/n): " ENV_VARS_SET
+if [[ "$ENV_VARS_SET" =~ ^[Yy]$ ]]; then
+    echo -e "\033[1;32mAll variables are set in .env file.\033[0m"
+    echo -e "\033[1;32mContinuing...\033[0m"
+else
+    echo -e "\033[1;31mError: Please ensure all variables are set in .env file.\033[0m"
+    exit 1
+fi
+
+# Directories (from env or defaults)
+FRONTEND_DIR=${FRONTEND_DIR}
+BACKEND_DIR=${BACKEND_DIR}
+SCRIPTS_DIR=${SCRIPTS_DIR}
+DATABASE_DIR=${DATABASE_DIR}
+
 
 # Atlas default environment
 ATLAS_ENV_DEFAULT="dev"
@@ -38,7 +47,7 @@ NC='\033[0m' # No Color
 
 # --- Helper Functions ---
 print_header() {
-    echo -e "${BLUE}=== EnglishCoaching CLI ===${NC}"
+    echo -e "${BLUE}=== App Backend CLI ===${NC}"
     echo
 }
 
@@ -58,9 +67,6 @@ _ensure_env_var() {
     fi
     return 0
 }
-
-
-# --- Target Functions ---
 
 # --- Setup ---
 setup_scripts() {
@@ -129,12 +135,6 @@ backend_test() {
     (cd "$BACKEND_DIR" && cargo test)
 }
 
-backend_build_serve() {
-    setup_scripts
-    frontend_build # Dependency
-    echo -e "${BLUE}Building React and starting Axum server...${NC}"
-    "$SCRIPTS_DIR/build-react-and-serve.sh"
-}
 
 backend_sqlx_prepare() {
     echo -e "${CYAN}Preparing SQLx for offline mode...${NC}"
@@ -142,51 +142,6 @@ backend_sqlx_prepare() {
     echo -e "${GREEN}✓ SQLx prepared successfully${NC}"
 }
 
-# --- Frontend ---
-frontend_install() {
-    echo -e "${BLUE}Installing frontend dependencies...${NC}"
-    (cd "$FRONTEND_DIR" && pnpm install)
-    echo -e "${GREEN}✓ Frontend dependencies installed${NC}"
-}
-
-frontend_dev() {
-    echo -e "${BLUE}Starting React development server...${NC}"
-    echo -e "${YELLOW}Frontend available at: http://localhost:3000${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run dev)
-}
-
-frontend_check() {
-    echo -e "${BLUE}Running TypeScript type checks...${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run check)
-    echo -e "${GREEN}✓ Type checks complete${NC}"
-}
-
-frontend_build() {
-    frontend_check # Dependency
-    echo -e "${BLUE}Building React for production...${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run build)
-    echo -e "${GREEN}✓ React build complete${NC}"
-    echo -e "${YELLOW}Static files output to: $FRONTEND_DIR/dist${NC}"
-}
-
-frontend_preview() {
-    frontend_check # Dependency
-    echo -e "${BLUE}Starting React preview server...${NC}"
-    echo -e "${YELLOW}Preview available at: http://localhost:4173${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run serve)
-}
-
-frontend_lint() {
-    echo -e "${BLUE}Linting frontend code...${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run lint)
-    echo -e "${GREEN}✓ Linting complete${NC}"
-}
-
-frontend_fix_lint() {
-    echo -e "${BLUE}Formatting frontend code (Prettier)...${NC}"
-    (cd "$FRONTEND_DIR" && pnpm run format)
-    echo -e "${GREEN}✓ Formatting complete${NC}"
-}
 
 # --- Database Migrations (Atlas & SQLx) ---
 db_atlas_hash() {
@@ -290,15 +245,6 @@ deploy_app() {
     echo -e "${GREEN}✅ Application deployment complete!${NC}"
 }
 
-deploy_static() {
-    setup_scripts # Dependency
-    echo -e "${CYAN}Deploying static files to server...${NC}"
-    _get_deploy_params
-    echo -e "${YELLOW}Deploying static files to ${DEPLOY_USER}@${SERVER_IP}:${SSH_DEPLOY_PORT}...${NC}"
-    "$SCRIPTS_DIR/server-update-static.sh" "$SERVER_IP" "$DEPLOY_USER" "$SSH_DEPLOY_PORT"
-    echo -e "${GREEN}✅ Static files deployment complete!${NC}"
-}
-
 deploy_setup() {
     deploy_generate_key
     deploy_copy_key
@@ -346,26 +292,6 @@ _clean_action() {
     echo -e "${BLUE}Cleaning backend build artifacts...${NC}"
     (cd "$BACKEND_DIR" && cargo clean)
     echo -e "${GREEN}✓ Backend target directory cleaned${NC}"
-
-    if [ -d "$FRONTEND_DIR/node_modules" ]; then
-        if $force_clean_node_modules; then
-            echo -e "${BLUE}Removing $FRONTEND_DIR/node_modules...${NC}"
-            rm -rf "$FRONTEND_DIR/node_modules"
-            echo -e "${GREEN}✓ Removed node_modules${NC}"
-        else
-            echo -en "${YELLOW}Remove frontend node_modules? (y/N): ${NC}"
-            read -r answer
-            if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
-                echo -e "${BLUE}Removing $FRONTEND_DIR/node_modules...${NC}"
-                rm -rf "$FRONTEND_DIR/node_modules"
-                echo -e "${GREEN}✓ Removed node_modules${NC}"
-            else
-                echo -e "${YELLOW}Skipping node_modules removal.${NC}"
-            fi
-        fi
-    else
-        echo -e "${YELLOW}Frontend node_modules directory not found.${NC}"
-    fi
 }
 
 clean_normal() {
@@ -386,7 +312,6 @@ show_backend_menu() {
             "Test backend"
             "Start DB (dev) & Apply Migrations"
             "Start DB (test) & Apply Migrations"
-            "Build SvelteKit & Serve with Axum"
             "SQLx Prepare (for offline mode)"
             "Back to Main Menu"
         )
@@ -399,7 +324,6 @@ show_backend_menu() {
                 3) backend_test; break ;;
                 4) backend_start_db; break ;;
                 5) backend_start_db_test; break ;;
-                6) backend_build_serve; break ;;
                 7) backend_sqlx_prepare; break ;;
                 $((${#options[@]}))) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
@@ -408,36 +332,6 @@ show_backend_menu() {
     done
 }
 
-show_frontend_menu() {
-    while true; do
-        echo -e "\n${BOLD}${CYAN}--- Frontend (React) ---${NC}"
-        local options=(
-            "Install dependencies (pnpm install)"
-            "Run dev server (pnpm run dev)"
-            "Build for production (pnpm run build)"
-            "Preview production build (pnpm run serve)"
-            "Lint code (pnpm run lint)"
-            "Fix lint issues (Format with Prettier)"
-            "Run type checks (TypeScript)"
-            "Back to Main Menu"
-        )
-        COLUMNS=1
-        PS3="Frontend action? "
-        select opt in "${options[@]}"; do
-            case $REPLY in
-                1) frontend_install; break ;;
-                2) frontend_dev; break ;;
-                3) frontend_build; break ;;
-                4) frontend_preview; break ;;
-                5) frontend_lint; break ;;
-                6) frontend_fix_lint; break ;;
-                7) frontend_check; break ;;
-                $((${#options[@]}))) return ;;
-                *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
-            esac
-        done
-    done
-}
 
 show_db_menu() {
     while true; do
@@ -534,7 +428,6 @@ main_menu() {
         local main_options=(
             "Setup Scripts (make executable)"
             "Backend (Rust/Axum)"
-            "Frontend (React)"
             "Database (Atlas & SQLx)"
             "Deployment"
             "Tools & Cleanup"
@@ -549,7 +442,6 @@ main_menu() {
             case $REPLY in
                 1) setup_scripts; break ;;
                 2) show_backend_menu; break ;;
-                3) show_frontend_menu; break ;;
                 4) show_db_menu; break ;;
                 5) show_deploy_menu; break ;;
                 6) show_tools_menu; break ;;
@@ -561,23 +453,5 @@ main_menu() {
 }
 
 # --- Entry Point ---
-# Set COLUMNS to 1 for better readability of select menus if it's not already narrow
-# This helps prevent options from wrapping weirdly on wider terminals.
-# However, user might have specific COLUMNS setting, so this is optional.
-# export COLUMNS=1
-
-# Start the main menu
-main_menu
-            esac
-        done
-    done
-}
-
-# --- Entry Point ---
-# Set COLUMNS to 1 for better readability of select menus if it's not already narrow
-# This helps prevent options from wrapping weirdly on wider terminals.
-# However, user might have specific COLUMNS setting, so this is optional.
-# export COLUMNS=1
-
 # Start the main menu
 main_menu
