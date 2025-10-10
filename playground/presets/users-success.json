@@ -9,9 +9,10 @@
      "method": "POST",
      "path": "/api/users",
      "body": {
-       "display_name": "Jane Doe",
-       "email": "jane.doe@example.com",
-       "role": "Student"
+       "display_name": "Admin User",
+       "email": "admin@example.com",
+       "password": "adminpass",
+       "role": "Admin"
      }
    },
    {
