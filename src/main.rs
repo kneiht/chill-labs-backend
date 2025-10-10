@@ -25,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("App configurations: {:#?}", &settings);
 
     // Initialize app state
-    let state = AppState::new(&settings);
+    let state = AppState::new(&settings).await?;
 
     // Start the server
     server::serve(&state).await?;
