@@ -7,7 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 use crate::domain::healthcheck::handler::healthcheck;
 use crate::state::AppState;
 
-pub async fn serve(state: AppState) -> anyhow::Result<()> {
+pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // CORS setup
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -31,6 +31,7 @@ pub async fn serve(state: AppState) -> anyhow::Result<()> {
         .settings
         .server
         .host
+        .clone()
         .unwrap_or_else(|| "127.0.0.1".to_string());
 
     // Check if host is valid ip
