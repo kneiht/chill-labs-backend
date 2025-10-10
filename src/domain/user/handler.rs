@@ -6,13 +6,12 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Deserialize)]
-pub struct CreateUserRequest {
-    pub display_name: String,
-    pub email: String,
-    pub password: String,
-    pub role: Role,
-}
+ #[derive(Debug, Deserialize)]
+ pub struct CreateUserRequest {
+     pub display_name: String,
+     pub email: String,
+     pub password: String,
+ }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserRequest {
@@ -63,13 +62,13 @@ pub async fn create_user(
         }
     };
 
-    match user_service
-        .create_user(req.display_name, req.email, password_hash, req.role)
-        .await
-    {
-        Ok(user) => UseCaseResponse::success_created(user.into(), "User created successfully"),
-        Err(e) => UseCaseResponse::failure_internal("Failed to create user", Some(e.to_string())),
-    }
+     match user_service
+         .create_user(req.display_name, req.email, password_hash, Role::Student)
+         .await
+     {
+         Ok(user) => UseCaseResponse::success_created(user.into(), "User created successfully"),
+         Err(e) => UseCaseResponse::failure_internal("Failed to create user", Some(e.to_string())),
+     }
 }
 
 pub async fn get_user(

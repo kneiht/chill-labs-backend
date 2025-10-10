@@ -1,19 +1,18 @@
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
+ use serde::{Deserialize, Serialize};
+ use uuid::Uuid;
 
-#[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
+ #[derive(Debug, Deserialize)]
+ pub struct LoginRequest {
+     pub email: String,
+     pub password: String,
+ }
 
-#[derive(Debug, Deserialize)]
-pub struct RegisterRequest {
-    pub display_name: String,
-    pub email: String,
-    pub password: String,
-    pub role: Option<String>,
-}
+ #[derive(Debug, Deserialize)]
+ pub struct RegisterRequest {
+     pub display_name: String,
+     pub email: String,
+     pub password: String,
+ }
 
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {

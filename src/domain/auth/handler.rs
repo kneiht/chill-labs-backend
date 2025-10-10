@@ -72,14 +72,8 @@ pub async fn register(
         }
     };
 
-    // Parse role
-    let role = req.role.as_deref().unwrap_or("Student");
-    let role = match role {
-        "Student" => Role::Student,
-        "Teacher" => Role::Teacher,
-        "Admin" => Role::Admin,
-        _ => Role::Student,
-    };
+     // All new users default to Student role
+     let role = Role::Student;
 
     match user_service
         .create_user_with_password(req.display_name, req.email, password_hash, role)
