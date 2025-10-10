@@ -28,8 +28,8 @@ async fn init_db(settings: &Settings) -> anyhow::Result<PgPool> {
         .context("Database URL is not set")?;
     let pool = PgPool::connect(&url).await?;
     // Run migrations if the setting is explicitly true, default to false if not set
-    if settings.database.migrate_on_startup.unwrap_or(false) {
-        sqlx::migrate!("./database/migrations").run(&pool).await?;
-    }
+    // if settings.database.migrate_on_startup.unwrap_or(false) {
+    //     sqlx::migrate!("./database/migrations").run(&pool).await?;
+    // }
     Ok(pool)
 }
