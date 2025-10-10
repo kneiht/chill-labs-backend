@@ -1,15 +1,30 @@
 use anyhow::Context;
+use axum::http::Method;
 use axum::{routing::get, Router};
 use std::net::{IpAddr, SocketAddr};
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::healthcheck::handler::healthcheck;
 use crate::state::AppState;
 
 pub async fn serve(state: AppState) -> anyhow::Result<()> {
+    // CORS setup
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers(Any);
+
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
-        .with_state(state.clone());
+        .with_state(state.clone())
+        .layer(cors);
 
     // Server host ip
     let host = state
@@ -26,9 +41,6 @@ pub async fn serve(state: AppState) -> anyhow::Result<()> {
 
     // Server address
     let addr = SocketAddr::new(host_ip, port);
-
-    // Print server address
-    println!("Listening on http://{}", addr);
 
     // Bind server to address
     let listener = tokio::net::TcpListener::bind(addr)

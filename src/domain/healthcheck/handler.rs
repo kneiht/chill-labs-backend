@@ -1,4 +1,4 @@
-use crate::domain::response::{SuccessType, UseCaseResponse};
+use crate::domain::response::UseCaseResponse;
 use serde_json::json;
 
 pub async fn healthcheck() -> UseCaseResponse<serde_json::Value> {
