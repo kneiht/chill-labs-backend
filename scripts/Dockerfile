@@ -17,6 +17,7 @@ COPY $BACKEND_DIR/Cargo.lock ./$BACKEND_DIR/Cargo.lock
 COPY $BACKEND_DIR/src ./$BACKEND_DIR/src
 COPY $BACKEND_DIR/static ./$BACKEND_DIR/static
 COPY $BACKEND_DIR/.sqlx ./$BACKEND_DIR/.sqlx
+COPY $BACKEND_DIR/database/migrations ./$BACKEND_DIR/database/migrations
 
 # build release
 ENV SQLX_OFFLINE=true

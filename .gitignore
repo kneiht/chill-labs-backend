@@ -18,7 +18,6 @@ dist
 
 # Rust
 target
-.sqlx
 
 # Images
 scripts/english-coaching-image.tar.gz
@@ -27,3 +26,4 @@ scripts/static-files.tar.gz
 
 # Private files and folders
 \#*
+database/backups/backup_english-coaching-postgres_20251010_163823.sql

@@ -323,7 +323,7 @@ show_backend_menu() {
                 3) backend_test; break ;;
                 4) backend_start_db; break ;;
                 5) backend_start_db_test; break ;;
-                7) backend_sqlx_prepare; break ;;
+                6) backend_sqlx_prepare; break ;;
                 0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac

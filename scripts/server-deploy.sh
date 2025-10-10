@@ -88,13 +88,19 @@ echo -e "${BLUE}Creating directories on server...${NC}"
 $SCP_CMD ./scripts/docker-compose.yml $USERNAME@$SERVER_IP:$REMOTE_DIR/
 $SCP_CMD ./scripts/setup-server.sh $USERNAME@$SERVER_IP:$REMOTE_DIR/
 $SCP_CMD ./scripts/Caddyfile $USERNAME@$SERVER_IP:$REMOTE_DIR/
-if [ -f ".env" ]; then
-    $SCP_CMD .env.production $USERNAME@$SERVER_IP:$REMOTE_DIR/.env
-    echo -e "${GREEN}✓ Copied .env file${NC}"
-else
-    echo -e "${RED}.env file not found. Please create .env with required variables.${NC}"
-    exit 1
-fi
+ if [ -f ".env.production" ]; then
+     $SCP_CMD .env.production $USERNAME@$SERVER_IP:$REMOTE_DIR/.env
+     echo -e "${GREEN}✓ Copied .env file${NC}"
+ else
+     echo -e "${RED}.env.production file not found. Please create .env with required variables.${NC}"
+     exit 1
+ fi
+
+ # Copy database migrations
+ echo -e "${BLUE}Copying database migrations...${NC}"
+ $SCP_CMD -r ./database/migrations $USERNAME@$SERVER_IP:$REMOTE_DIR/database/
+ $SCP_CMD -r ./.sqlx $USERNAME@$SERVER_IP:$REMOTE_DIR
+ echo -e "${GREEN}✓ Database migrations copied${NC}"
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Failed to create directories on server!${NC}"
