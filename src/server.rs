@@ -1,10 +1,11 @@
 use anyhow::Context;
 use axum::http::Method;
-use axum::{routing::get, Router};
+use axum::{routing::{get, post, put, delete}, Router};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::healthcheck::handler::healthcheck;
+use crate::domain::user::handler::{create_user, get_user, get_all_users, update_user, delete_user};
 use crate::state::AppState;
 
 pub async fn serve(state: &AppState) -> anyhow::Result<()> {
@@ -23,6 +24,11 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
+        .route("/api/users", post(create_user))
+        .route("/api/users", get(get_all_users))
+        .route("/api/users/{id}", get(get_user))
+        .route("/api/users/{id}", put(update_user))
+        .route("/api/users/{id}", delete(delete_user))
         .with_state(state.clone())
         .layer(cors);
 
