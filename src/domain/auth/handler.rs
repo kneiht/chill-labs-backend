@@ -1,5 +1,5 @@
 use super::model::{AuthResponse, LoginRequest, RegisterRequest, UserInfo};
-use crate::domain::response::UseCaseResponse;
+use crate::domain::response::ApiResponse;
 use crate::domain::user::model::Role;
 use crate::state::AppState;
 use crate::utils::jwt::JwtUtil;
@@ -9,7 +9,7 @@ use axum::Json;
 pub async fn login(
     axum::extract::State(state): axum::extract::State<AppState>,
     Json(req): Json<LoginRequest>,
-) -> UseCaseResponse<AuthResponse> {
+) -> ApiResponse<AuthResponse> {
     let user_service = state.user_service.clone();
 
     match user_service
@@ -37,7 +37,7 @@ pub async fn login(
                         status: format!("{:?}", user.status),
                     };
 
-                    UseCaseResponse::success_ok(
+                    ApiResponse::success_ok(
                         AuthResponse {
                             token,
                             user: user_info,
@@ -45,35 +45,31 @@ pub async fn login(
                         "Login successful",
                     )
                 }
-                Err(e) => UseCaseResponse::failure_internal(
-                    "Failed to generate token",
-                    Some(e.to_string()),
-                ),
+                Err(e) => {
+                    ApiResponse::failure_internal("Failed to generate token", Some(e.to_string()))
+                }
             }
         }
-        Err(e) => UseCaseResponse::failure_unauthorized("Invalid credentials", Some(e.to_string())),
+        Err(e) => ApiResponse::failure_unauthorized("Invalid credentials", Some(e.to_string())),
     }
 }
 
 pub async fn register(
     axum::extract::State(state): axum::extract::State<AppState>,
     Json(req): Json<RegisterRequest>,
-) -> UseCaseResponse<AuthResponse> {
+) -> ApiResponse<AuthResponse> {
     let user_service = state.user_service.clone();
 
     // Hash the password
     let password_hash = match hash_password(&req.password) {
         Ok(hash) => hash,
         Err(e) => {
-            return UseCaseResponse::failure_internal(
-                "Failed to hash password",
-                Some(e.to_string()),
-            )
+            return ApiResponse::failure_internal("Failed to hash password", Some(e.to_string()))
         }
     };
 
-     // All new users default to Student role
-     let role = Role::Student;
+    // All new users default to Student role
+    let role = Role::Student;
 
     match user_service
         .create_user_with_password(req.display_name, req.email, password_hash, role)
@@ -100,7 +96,7 @@ pub async fn register(
                         status: format!("{:?}", user.status),
                     };
 
-                    UseCaseResponse::success_created(
+                    ApiResponse::success_created(
                         AuthResponse {
                             token,
                             user: user_info,
@@ -108,12 +104,11 @@ pub async fn register(
                         "User registered successfully",
                     )
                 }
-                Err(e) => UseCaseResponse::failure_internal(
-                    "Failed to generate token",
-                    Some(e.to_string()),
-                ),
+                Err(e) => {
+                    ApiResponse::failure_internal("Failed to generate token", Some(e.to_string()))
+                }
             }
         }
-        Err(e) => UseCaseResponse::failure_conflict("Failed to register user", Some(e.to_string())),
+        Err(e) => ApiResponse::failure_conflict("Failed to register user", Some(e.to_string())),
     }
 }

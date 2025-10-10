@@ -35,7 +35,7 @@ pub struct Pagination {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UseCaseResponse<T> {
+pub struct ApiResponse<T> {
     pub success: bool,
     pub message: String,
     pub status: Status,
@@ -47,7 +47,7 @@ pub struct UseCaseResponse<T> {
     pub error: Option<String>,
 }
 
-impl<T> UseCaseResponse<T> {
+impl<T> ApiResponse<T> {
     pub fn success(data: T, message: &str, status: SuccessType) -> Self {
         Self {
             success: true,
@@ -114,7 +114,7 @@ impl<T> UseCaseResponse<T> {
     }
 }
 
-impl<T: Serialize> IntoResponse for UseCaseResponse<T> {
+impl<T: Serialize> IntoResponse for ApiResponse<T> {
     fn into_response(self) -> axum::response::Response {
         let status_code = if self.success {
             StatusCode::OK
