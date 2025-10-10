@@ -27,7 +27,7 @@ tracing-appender = "0.2"
 tower-http = { version = "0.6", features = ["trace", "fs", "cors"] }
 chrono = { version = "0.4", features = ["serde"] }
 axum-macros = "0.5"
-jsonwebtoken = "10.0.0"
+jsonwebtoken = { version = "10.0.0", features = ["rust_crypto"] }
 argon2 = "0.5"
 sqlx = { version = "0.8", features = [
     "postgres",
