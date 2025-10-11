@@ -1,36 +1,23 @@
  [
-   {
-     "label": "POST /api/users (missing display_name)",
-     "method": "POST",
-     "path": "/api/users",
-     "body": {
-       "email": "jane.doe@example.com",
-       "password": "password123",
-       "role": "Student"
-     }
-   },
-   {
-     "label": "POST /api/users (invalid email)",
-     "method": "POST",
-     "path": "/api/users",
-     "body": {
-       "display_name": "Jane Doe",
-       "email": "invalid-email",
-       "password": "password123",
-       "role": "Student"
-     }
-   },
-   {
-     "label": "POST /api/users (invalid role)",
-     "method": "POST",
-     "path": "/api/users",
-     "body": {
-       "display_name": "Jane Doe",
-       "email": "jane.doe@example.com",
-       "password": "password123",
-       "role": "InvalidRole"
-     }
-   },
+    {
+      "label": "POST /api/users (missing display_name)",
+      "method": "POST",
+      "path": "/api/users",
+      "body": {
+        "email": "jane.doe@example.com",
+        "password": "password123"
+      }
+    },
+    {
+      "label": "POST /api/users (invalid email)",
+      "method": "POST",
+      "path": "/api/users",
+      "body": {
+        "display_name": "Jane Doe",
+        "email": "invalid-email",
+        "password": "password123"
+      }
+    },
    {
      "label": "GET /api/users/{id} (invalid id)",
      "method": "GET",
