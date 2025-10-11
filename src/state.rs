@@ -1,11 +1,15 @@
-use crate::domain::user::model::Role;
-use crate::domain::user::repository::UserRepository;
-use crate::domain::user::service::UserService;
-use crate::settings::Settings;
 use crate::utils::password::hash_password;
 use anyhow::Context;
 use sqlx::PgPool;
 use tracing;
+
+// User domain
+use crate::domain::user::model::Role;
+use crate::domain::user::repository::UserRepository;
+use crate::domain::user::service::UserService;
+
+// Settings
+use crate::settings::Settings;
 
 #[derive(Clone)]
 pub struct AppState {
