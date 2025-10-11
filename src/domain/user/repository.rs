@@ -1,13 +1,17 @@
-use super::model::{User, UserRow};
 use anyhow::Result;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+// Import user model
+use super::model::{User, UserRow};
+
+// UserRepository struct
 #[derive(Clone)]
 pub struct UserRepository {
     pool: PgPool,
 }
 
+// Implementation of UserRepository
 impl UserRepository {
     pub fn new(pool: PgPool) -> Self {
         Self { pool }

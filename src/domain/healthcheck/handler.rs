@@ -1,6 +1,6 @@
-use crate::domain::response::ApiResponse;
+use crate::domain::response::Response;
 use serde_json::json;
 
-pub async fn healthcheck() -> ApiResponse<serde_json::Value> {
-    ApiResponse::success_ok(json!({"status": "ok"}), "Health check successful")
+pub async fn healthcheck() -> Response<serde_json::Value> {
+    Response::success_ok(json!({"status": "ok"}), "Health check successful")
 }

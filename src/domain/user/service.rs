@@ -1,14 +1,20 @@
-use super::model::{Role, User, UserStatus};
-use super::repository::UserRepository;
 use crate::utils::password::verify_password;
 use anyhow::{anyhow, Result};
 use uuid::Uuid;
 
+// Impor user model
+use super::model::{Role, User, UserStatus};
+
+// Import user repository
+use super::repository::UserRepository;
+
+// UserService struct
 #[derive(Clone)]
 pub struct UserService {
     repository: UserRepository,
 }
 
+// Implementation of UserService
 impl UserService {
     pub fn new(repository: UserRepository) -> Self {
         Self { repository }

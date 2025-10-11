@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+// Role enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Role {
     Student,
@@ -8,6 +9,15 @@ pub enum Role {
     Admin,
 }
 
+// UserStatus enum
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum UserStatus {
+    Active,
+    Pending,
+    Suspended,
+}
+
+// User struct
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct User {
     pub id: Uuid,
@@ -20,6 +30,7 @@ pub struct User {
     pub updated: chrono::DateTime<chrono::Utc>,
 }
 
+// Implementation of User
 impl User {
     pub fn new(display_name: String, email: String, password_hash: String, role: Role) -> Self {
         let now = chrono::Utc::now();
@@ -36,13 +47,6 @@ impl User {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum UserStatus {
-    Active,
-    Pending,
-    Suspended,
-}
-
 // Internal struct for database queries
 #[derive(sqlx::FromRow)]
 pub struct UserRow {
@@ -56,6 +60,7 @@ pub struct UserRow {
     pub updated: chrono::DateTime<chrono::Utc>,
 }
 
+// Implementation of From<UserRow> for User
 impl From<UserRow> for User {
     fn from(row: UserRow) -> Self {
         Self {
