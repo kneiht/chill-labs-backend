@@ -2,6 +2,7 @@ use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::{PasswordHash, SaltString};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 
+// Hash a password using Argon2
 pub fn hash_password(password: &str) -> anyhow::Result<String> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
@@ -11,6 +12,7 @@ pub fn hash_password(password: &str) -> anyhow::Result<String> {
     Ok(hash.to_string())
 }
 
+// Verify a password using Argon2
 pub fn verify_password(password: &str, hash: &str) -> anyhow::Result<bool> {
     let parsed_hash =
         PasswordHash::new(hash).map_err(|e| anyhow::anyhow!("Invalid password hash: {}", e))?;

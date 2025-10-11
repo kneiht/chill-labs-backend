@@ -1,4 +1,5 @@
 use super::model::{AuthResponse, LoginRequest, RegisterRequest, UserInfo};
+use crate::domain::error::AppError;
 use crate::domain::response::Response;
 use crate::domain::user::model::Role;
 use crate::state::AppState;
@@ -12,46 +13,56 @@ pub async fn login(
 ) -> Response<AuthResponse> {
     let user_service = state.user_service.clone();
 
-    match user_service
+    let user = match user_service
         .authenticate_user(&req.email, &req.password)
         .await
     {
-        Ok(user) => {
-            let jwt_util = JwtUtil::new(
-                &state
-                    .settings
-                    .jwt
-                    .secret
-                    .as_ref()
-                    .unwrap_or(&"default_secret".to_string()),
-                state.settings.jwt.expiration_hours.unwrap_or(24),
-            );
-
-            match jwt_util.generate_token(user.id, &user.email) {
-                Ok(token) => {
-                    let user_info = UserInfo {
-                        id: user.id,
-                        display_name: user.display_name,
-                        email: user.email,
-                        role: format!("{:?}", user.role),
-                        status: format!("{:?}", user.status),
-                    };
-
-                    Response::success_ok(
-                        AuthResponse {
-                            token,
-                            user: user_info,
-                        },
-                        "Login successful",
-                    )
+        Ok(user) => user,
+        Err(e) => {
+            return match e {
+                AppError::NotFound(_) => {
+                    Response::failure_unauthorized("Invalid credentials", None)
                 }
-                Err(e) => {
-                    Response::failure_internal("Failed to generate token", Some(e.to_string()))
+                AppError::InvalidPassword(_) => {
+                    Response::failure_unauthorized("Invalid credentials", None)
                 }
-            }
+                _ => Response::failure_internal("Authentication failed", Some(e.to_string())),
+            };
         }
-        Err(e) => Response::failure_unauthorized("Invalid credentials", Some(e.to_string())),
-    }
+    };
+
+    let jwt_util = JwtUtil::new(
+        &state
+            .settings
+            .jwt
+            .secret
+            .as_ref()
+            .unwrap_or(&"default_secret".to_string()),
+        state.settings.jwt.expiration_hours.unwrap_or(24),
+    );
+
+    let token = match jwt_util.generate_token(user.id, &user.email) {
+        Ok(token) => token,
+        Err(e) => {
+            return Response::failure_internal("Failed to generate token", Some(e.to_string()));
+        }
+    };
+
+    let user_info = UserInfo {
+        id: user.id,
+        display_name: user.display_name,
+        email: user.email,
+        role: format!("{:?}", user.role),
+        status: format!("{:?}", user.status),
+    };
+
+    Response::success_ok(
+        AuthResponse {
+            token,
+            user: user_info,
+        },
+        "Login successful",
+    )
 }
 
 pub async fn register(
@@ -64,51 +75,67 @@ pub async fn register(
     let password_hash = match hash_password(&req.password) {
         Ok(hash) => hash,
         Err(e) => {
-            return Response::failure_internal("Failed to hash password", Some(e.to_string()))
+            return Response::failure_internal("Failed to hash password", Some(e.to_string()));
         }
     };
 
     // All new users default to Student role
     let role = Role::Student;
 
-    match user_service
+    let user = match user_service
         .create_user_with_password(req.display_name, req.email, password_hash, role)
         .await
     {
-        Ok(user) => {
-            let jwt_util = JwtUtil::new(
-                &state
-                    .settings
-                    .jwt
-                    .secret
-                    .as_ref()
-                    .unwrap_or(&"default_secret".to_string()),
-                state.settings.jwt.expiration_hours.unwrap_or(24),
-            );
-
-            match jwt_util.generate_token(user.id, &user.email) {
-                Ok(token) => {
-                    let user_info = UserInfo {
-                        id: user.id,
-                        display_name: user.display_name,
-                        email: user.email,
-                        role: format!("{:?}", user.role),
-                        status: format!("{:?}", user.status),
-                    };
-
-                    Response::success_created(
-                        AuthResponse {
-                            token,
-                            user: user_info,
-                        },
-                        "User registered successfully",
-                    )
+        Ok(user) => user,
+        Err(e) => {
+            return match e {
+                AppError::Validation(_) => {
+                    Response::failure_validation("Invalid input data", Some(e.to_string()))
                 }
-                Err(e) => {
-                    Response::failure_internal("Failed to generate token", Some(e.to_string()))
+                AppError::AlreadyExists(_) => {
+                    Response::failure_conflict("Email already exists", Some(e.to_string()))
                 }
-            }
+                AppError::InvalidEmail(_) => {
+                    Response::failure_validation("Invalid email format", Some(e.to_string()))
+                }
+                AppError::MissingField(_) => {
+                    Response::failure_validation("Missing required field", Some(e.to_string()))
+                }
+                _ => Response::failure_internal("Failed to register user", Some(e.to_string())),
+            };
         }
-        Err(e) => Response::failure_conflict("Failed to register user", Some(e.to_string())),
-    }
+    };
+
+    let jwt_util = JwtUtil::new(
+        &state
+            .settings
+            .jwt
+            .secret
+            .as_ref()
+            .unwrap_or(&"default_secret".to_string()),
+        state.settings.jwt.expiration_hours.unwrap_or(24),
+    );
+
+    let token = match jwt_util.generate_token(user.id, &user.email) {
+        Ok(token) => token,
+        Err(e) => {
+            return Response::failure_internal("Failed to generate token", Some(e.to_string()));
+        }
+    };
+
+    let user_info = UserInfo {
+        id: user.id,
+        display_name: user.display_name,
+        email: user.email,
+        role: format!("{:?}", user.role),
+        status: format!("{:?}", user.status),
+    };
+
+    Response::success_created(
+        AuthResponse {
+            token,
+            user: user_info,
+        },
+        "User registered successfully",
+    )
 }

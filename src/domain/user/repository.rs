@@ -1,9 +1,11 @@
-use anyhow::Result;
 use sqlx::PgPool;
 use uuid::Uuid;
 
 // Import user model
 use super::model::{User, UserRow};
+
+// Import error handling
+use crate::domain::error::AppError;
 
 // UserRepository struct
 #[derive(Clone)]
@@ -17,7 +19,7 @@ impl UserRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, user: &User) -> Result<User> {
+    pub async fn create(&self, user: &User) -> Result<User, AppError> {
         let result = sqlx::query_as!(
              UserRow,
              r#"
@@ -35,12 +37,13 @@ impl UserRepository {
              user.updated
          )
          .fetch_one(&self.pool)
-         .await?;
+         .await
+         .map_err(AppError::from)?;
 
         Ok(result.into())
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>> {
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as!(
             UserRow,
             r#"
@@ -50,12 +53,13 @@ impl UserRepository {
             id
         )
         .fetch_optional(&self.pool)
-        .await?;
+        .await
+        .map_err(AppError::from)?;
 
         Ok(user.map(|u| u.into()))
     }
 
-    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>> {
+    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as!(
             UserRow,
             r#"
@@ -65,12 +69,13 @@ impl UserRepository {
             email
         )
         .fetch_optional(&self.pool)
-        .await?;
+        .await
+        .map_err(AppError::from)?;
 
         Ok(user.map(|u| u.into()))
     }
 
-    pub async fn find_all(&self) -> Result<Vec<User>> {
+    pub async fn find_all(&self) -> Result<Vec<User>, AppError> {
         let users = sqlx::query_as!(
             UserRow,
             r#"
@@ -79,12 +84,13 @@ impl UserRepository {
               "#
         )
         .fetch_all(&self.pool)
-        .await?;
+        .await
+        .map_err(AppError::from)?;
 
         Ok(users.into_iter().map(|u| u.into()).collect())
     }
 
-    pub async fn update(&self, user: &User) -> Result<User> {
+    pub async fn update(&self, user: &User) -> Result<User, AppError> {
         let result = sqlx::query_as!(
              UserRow,
              r#"
@@ -102,15 +108,17 @@ impl UserRepository {
              user.updated
          )
          .fetch_one(&self.pool)
-         .await?;
+         .await
+         .map_err(AppError::from)?;
 
         Ok(result.into())
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<bool> {
+    pub async fn delete(&self, id: Uuid) -> Result<bool, AppError> {
         let result = sqlx::query!("DELETE FROM users WHERE id = $1", id)
             .execute(&self.pool)
-            .await?;
+            .await
+            .map_err(AppError::from)?;
 
         Ok(result.rows_affected() > 0)
     }

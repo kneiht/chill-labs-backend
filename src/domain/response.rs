@@ -2,6 +2,7 @@ use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+// ErrorType enum
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ErrorType {
     Validation,
@@ -12,6 +13,7 @@ pub enum ErrorType {
     Conflict,
 }
 
+// SuccessType enum
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SuccessType {
     Ok,
@@ -19,6 +21,7 @@ pub enum SuccessType {
     NoContent,
 }
 
+// Status enum
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Status {
@@ -26,6 +29,7 @@ pub enum Status {
     Error(ErrorType),
 }
 
+// Pagination struct
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Pagination {
     pub page: u32,
@@ -34,6 +38,7 @@ pub struct Pagination {
     pub pages: u32,
 }
 
+// Response struct
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Response<T> {
     pub success: bool,

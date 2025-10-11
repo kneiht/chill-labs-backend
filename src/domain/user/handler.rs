@@ -1,4 +1,5 @@
 use super::model::{Role, User, UserStatus};
+use crate::domain::error::ToResponse;
 use crate::domain::response::Response;
 use crate::state::AppState;
 use crate::utils::password::hash_password;
@@ -55,17 +56,18 @@ pub async fn create_user(
     let password_hash = match hash_password(&req.password) {
         Ok(hash) => hash,
         Err(e) => {
-            return Response::failure_internal("Failed to hash password", Some(e.to_string()))
+            return Response::failure_internal(
+                "Failed to hash password",
+                Some(format!("Password hashing failed: {}", e)),
+            );
         }
     };
 
-    match user_service
+    user_service
         .create_user(req.display_name, req.email, password_hash, Role::Student)
         .await
-    {
-        Ok(user) => Response::success_created(user.into(), "User created successfully"),
-        Err(e) => Response::failure_internal("Failed to create user", Some(e.to_string())),
-    }
+        .map(|user| user.into())
+        .to_response_created("User created successfully")
 }
 
 pub async fn get_user(
@@ -74,10 +76,11 @@ pub async fn get_user(
 ) -> Response<UserResponse> {
     let user_service = state.user_service.clone();
 
-    match user_service.get_user_by_id(id).await {
-        Ok(user) => Response::success_ok(user.into(), "User retrieved successfully"),
-        Err(e) => Response::failure_not_found("User not found", Some(e.to_string())),
-    }
+    user_service
+        .get_user_by_id(id)
+        .await
+        .map(|user| user.into())
+        .to_response("User retrieved successfully")
 }
 
 pub async fn get_all_users(
@@ -85,13 +88,11 @@ pub async fn get_all_users(
 ) -> Response<Vec<UserResponse>> {
     let user_service = state.user_service.clone();
 
-    match user_service.get_all_users().await {
-        Ok(users) => Response::success_ok(
-            users.into_iter().map(Into::into).collect(),
-            "Users retrieved successfully",
-        ),
-        Err(e) => Response::failure_internal("Failed to retrieve users", Some(e.to_string())),
-    }
+    user_service
+        .get_all_users()
+        .await
+        .map(|users| users.into_iter().map(Into::into).collect())
+        .to_response("Users retrieved successfully")
 }
 
 pub async fn update_user(
@@ -101,13 +102,11 @@ pub async fn update_user(
 ) -> Response<UserResponse> {
     let user_service = state.user_service.clone();
 
-    match user_service
+    user_service
         .update_user(id, req.display_name, req.email, req.role, req.status)
         .await
-    {
-        Ok(user) => Response::success_ok(user.into(), "User updated successfully"),
-        Err(e) => Response::failure_internal("Failed to update user", Some(e.to_string())),
-    }
+        .map(|user| user.into())
+        .to_response("User updated successfully")
 }
 
 pub async fn delete_user(
@@ -116,8 +115,8 @@ pub async fn delete_user(
 ) -> Response<serde_json::Value> {
     let user_service = state.user_service.clone();
 
-    match user_service.delete_user(id).await {
-        Ok(()) => Response::success_no_content("User deleted successfully"),
-        Err(e) => Response::failure_internal("Failed to delete user", Some(e.to_string())),
-    }
+    user_service
+        .delete_user(id)
+        .await
+        .to_response_no_content("User deleted successfully")
 }
