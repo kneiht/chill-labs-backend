@@ -3,5 +3,6 @@
   { "name": "Check", "file": "check.json" },
   { "name": "Images", "file": "images.json" },
   { "name": "User Success", "file": "users-success.json" },
-  { "name": "User Error", "file": "users-error.json" }
+  { "name": "User Error", "file": "users-error.json" },
+  { "name": "Notes", "file": "notes.json" }
 ]

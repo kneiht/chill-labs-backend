@@ -9,6 +9,9 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::auth::handler::{login, register};
 use crate::domain::healthcheck::handler::healthcheck;
+use crate::domain::note::handler::{
+    create_note, delete_note, get_all_notes, get_note_by_id, get_notes_by_user_id, update_note,
+};
 use crate::domain::user::handler::{
     create_user, delete_user, get_all_users, get_user, update_user,
 };
@@ -28,13 +31,6 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         ])
         .allow_headers(Any);
 
-    // Public routes
-    let public_routes = Router::new()
-        .route("/api/healthcheck", get(healthcheck))
-        .route("/api/auth/login", post(login))
-        .route("/api/auth/register", post(register))
-        .route("/api/users", post(create_user));
-
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
@@ -45,6 +41,13 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         .route("/api/users/{id}", get(get_user))
         .route("/api/users/{id}", put(update_user))
         .route("/api/users/{id}", delete(delete_user))
+        // Note routes
+        .route("/api/notes", post(create_note))
+        .route("/api/notes", get(get_all_notes))
+        .route("/api/notes/{id}", get(get_note_by_id))
+        .route("/api/notes/{id}", put(update_note))
+        .route("/api/notes/{id}", delete(delete_note))
+        .route("/api/users/{user_id}/notes", get(get_notes_by_user_id))
         .with_state(state.clone())
         .layer(cors);
 

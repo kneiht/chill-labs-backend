@@ -1,3 +1,5 @@
+use crate::domain::note::repository::NoteRepository;
+use crate::domain::note::service::NoteService;
 use crate::utils::password::hash_password;
 use anyhow::Context;
 use sqlx::PgPool;
@@ -15,6 +17,7 @@ use crate::settings::Settings;
 pub struct AppState {
     pub settings: Settings,
     pub user_service: UserService,
+    pub note_service: NoteService,
 }
 
 impl AppState {
@@ -25,9 +28,14 @@ impl AppState {
         let user_repository = UserRepository::new(pool.clone());
         let user_service = UserService::new(user_repository);
 
+        // Initialize note service
+        let note_repository = NoteRepository::new(pool.clone());
+        let note_service = NoteService::new(note_repository);
+
         Ok(Self {
             settings: settings.clone(),
             user_service,
+            note_service,
         })
     }
 }
