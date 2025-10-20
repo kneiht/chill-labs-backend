@@ -28,12 +28,13 @@ impl UserRepository {
         let result = sqlx::query_as!(
              UserRow,
              r#"
-              INSERT INTO users (id, display_name, email, password_hash, role, status, created, updated)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-              RETURNING id, display_name, email, password_hash, role, status, created, updated
+              INSERT INTO users (id, display_name, username, email, password_hash, role, status, created, updated)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+              RETURNING id, display_name, username, email, password_hash, role, status, created, updated
               "#,
              user.id,
              user.display_name,
+             user.username,
              user.email,
              user.password_hash,
              format!("{:?}", user.role),
@@ -57,7 +58,7 @@ impl UserRepository {
         let user = sqlx::query_as!(
             UserRow,
             r#"
-              SELECT id, display_name, email, password_hash, role, status, created, updated
+              SELECT id, display_name, username, email, password_hash, role, status, created, updated
               FROM users WHERE id = $1
               "#,
             id
@@ -78,7 +79,7 @@ impl UserRepository {
         let user = sqlx::query_as!(
             UserRow,
             r#"
-              SELECT id, display_name, email, password_hash, role, status, created, updated
+              SELECT id, display_name, username, email, password_hash, role, status, created, updated
               FROM users WHERE email = $1
               "#,
             &email
@@ -94,7 +95,7 @@ impl UserRepository {
         let users = sqlx::query_as!(
             UserRow,
             r#"
-              SELECT id, display_name, email, password_hash, role, status, created, updated
+              SELECT id, display_name, username, email, password_hash, role, status, created, updated
               FROM users ORDER BY created DESC
               "#
         )
@@ -112,12 +113,13 @@ impl UserRepository {
              UserRow,
              r#"
               UPDATE users
-              SET display_name = $2, email = $3, password_hash = $4, role = $5, status = $6, updated = $7
+              SET display_name = $2, username = $3, email = $4, password_hash = $5, role = $6, status = $7, updated = $8
               WHERE id = $1
-              RETURNING id, display_name, email, password_hash, role, status, created, updated
+              RETURNING id, display_name, username, email, password_hash, role, status, created, updated
               "#,
              user.id,
              user.display_name,
+             user.username,
              user.email,
              user.password_hash,
              format!("{:?}", user.role),
@@ -129,6 +131,27 @@ impl UserRepository {
          .map_err(AppError::from)?;
 
         Ok(result.into())
+    }
+
+    pub async fn find_by_username<I: Transformer<String>>(
+        &self,
+        input: I,
+    ) -> Result<Option<User>, AppError> {
+        let username = input.transform()?;
+
+        let user = sqlx::query_as!(
+            UserRow,
+            r#"
+              SELECT id, display_name, username, email, password_hash, role, status, created, updated
+              FROM users WHERE username = $1
+              "#,
+            &username
+        )
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::from)?;
+
+        Ok(user.map(|u| u.into()))
     }
 
     pub async fn delete<I: Transformer<Uuid>>(&self, input: I) -> Result<bool, AppError> {

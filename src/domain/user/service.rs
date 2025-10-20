@@ -25,6 +25,7 @@ impl UserService {
     pub async fn create_user(
         &self,
         display_name: String,
+        username: String,
         email: String,
         password_hash: String,
         role: Role,
@@ -32,6 +33,10 @@ impl UserService {
         // Validate input
         if display_name.trim().is_empty() {
             return Err(AppError::missing_field("display_name"));
+        }
+
+        if username.trim().is_empty() {
+            return Err(AppError::missing_field("username"));
         }
 
         if email.trim().is_empty() {
@@ -48,18 +53,25 @@ impl UserService {
             return Err(AppError::email_already_exists(&email));
         }
 
-        let user = User::new(display_name, email, password_hash, role);
+        // Check if username already exists
+        let existing_user = self.repository.find_by_username(&username[..]).await?;
+        if existing_user.is_some() {
+            return Err(AppError::username_already_exists(&username));
+        }
+
+        let user = User::new(display_name, username, email, password_hash, role);
         self.repository.create(user).await
     }
 
     pub async fn create_user_with_password(
         &self,
         display_name: String,
+        username: String,
         email: String,
         password_hash: String,
         role: Role,
     ) -> Result<User, AppError> {
-        self.create_user(display_name, email, password_hash, role)
+        self.create_user(display_name, username, email, password_hash, role)
             .await
     }
 
@@ -97,6 +109,7 @@ impl UserService {
         &self,
         id: Uuid,
         display_name: Option<String>,
+        username: Option<String>,
         email: Option<String>,
         role: Option<Role>,
         status: Option<UserStatus>,
@@ -108,6 +121,20 @@ impl UserService {
                 return Err(AppError::missing_field("display_name"));
             }
             user.display_name = display_name;
+        }
+
+        if let Some(username) = username {
+            if username.trim().is_empty() {
+                return Err(AppError::missing_field("username"));
+            }
+
+            // Check if new username conflicts
+            if let Some(existing) = self.repository.find_by_username(&username[..]).await? {
+                if existing.id != id {
+                    return Err(AppError::username_already_exists(&username));
+                }
+            }
+            user.username = username;
         }
 
         if let Some(email) = email {

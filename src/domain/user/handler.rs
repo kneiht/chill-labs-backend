@@ -10,6 +10,7 @@ use uuid::Uuid;
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
     pub display_name: String,
+    pub username: String,
     pub email: String,
     pub password: String,
 }
@@ -17,6 +18,7 @@ pub struct CreateUserRequest {
 #[derive(Debug, Deserialize)]
 pub struct UpdateUserRequest {
     pub display_name: Option<String>,
+    pub username: Option<String>,
     pub email: Option<String>,
     pub role: Option<Role>,
     pub status: Option<UserStatus>,
@@ -26,6 +28,7 @@ pub struct UpdateUserRequest {
 pub struct UserResponse {
     pub id: String,
     pub display_name: String,
+    pub username: String,
     pub email: String,
     pub role: Role,
     pub status: UserStatus,
@@ -38,6 +41,7 @@ impl From<User> for UserResponse {
         Self {
             id: user.id.to_string(),
             display_name: user.display_name,
+            username: user.username,
             email: user.email,
             role: user.role,
             status: user.status,
@@ -64,7 +68,7 @@ pub async fn create_user(
     };
 
     user_service
-        .create_user(req.display_name, req.email, password_hash, Role::Student)
+        .create_user(req.display_name, req.username, req.email, password_hash, Role::Student)
         .await
         .map(|user| user.into())
         .to_response_created("User created successfully")
@@ -103,7 +107,7 @@ pub async fn update_user(
     let user_service = state.user_service.clone();
 
     user_service
-        .update_user(id, req.display_name, req.email, req.role, req.status)
+        .update_user(id, req.display_name, req.username, req.email, req.role, req.status)
         .await
         .map(|user| user.into())
         .to_response("User updated successfully")

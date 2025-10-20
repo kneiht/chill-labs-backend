@@ -22,6 +22,7 @@ pub enum UserStatus {
 pub struct User {
     pub id: Uuid,
     pub display_name: String,
+    pub username: String,
     pub email: String,
     pub password_hash: String,
     pub role: Role,
@@ -32,11 +33,18 @@ pub struct User {
 
 // Implementation of User
 impl User {
-    pub fn new(display_name: String, email: String, password_hash: String, role: Role) -> Self {
+    pub fn new(
+        display_name: String,
+        username: String,
+        email: String,
+        password_hash: String,
+        role: Role,
+    ) -> Self {
         let now = chrono::Utc::now();
         Self {
             id: Uuid::now_v7(),
             display_name,
+            username,
             email,
             password_hash,
             role,
@@ -52,6 +60,7 @@ impl User {
 pub struct UserRow {
     pub id: Uuid,
     pub display_name: String,
+    pub username: String,
     pub email: String,
     pub password_hash: String,
     pub role: String,
@@ -66,6 +75,7 @@ impl From<UserRow> for User {
         Self {
             id: row.id,
             display_name: row.display_name,
+            username: row.username,
             email: row.email,
             password_hash: row.password_hash,
             role: match row.role.as_str() {

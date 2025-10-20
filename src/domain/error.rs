@@ -16,6 +16,7 @@ pub enum AppError {
     // Business logic errors
     NotFound(String),
     AlreadyExists(String),
+    UsernameAlreadyExists(String),
     Conflict(String),
 
     // Authentication/Authorization errors
@@ -43,6 +44,7 @@ impl fmt::Display for AppError {
             AppError::MissingField(msg) => write!(f, "Missing field: {}", msg),
             AppError::NotFound(msg) => write!(f, "Not found: {}", msg),
             AppError::AlreadyExists(msg) => write!(f, "Already exists: {}", msg),
+            AppError::UsernameAlreadyExists(msg) => write!(f, "Username already exists: {}", msg),
             AppError::Conflict(msg) => write!(f, "Conflict: {}", msg),
             AppError::Unauthorized(msg) => write!(f, "Unauthorized: {}", msg),
             AppError::Forbidden(msg) => write!(f, "Forbidden: {}", msg),
@@ -73,7 +75,11 @@ impl From<sqlx::Error> for AppError {
                 if db_err.constraint().is_some() {
                     if db_err.message().contains("unique") || db_err.message().contains("duplicate")
                     {
-                        AppError::AlreadyExists("Resource already exists".to_string())
+                        if db_err.message().contains("username") {
+                            AppError::UsernameAlreadyExists("Username already exists".to_string())
+                        } else {
+                            AppError::AlreadyExists("Resource already exists".to_string())
+                        }
                     } else if db_err.message().contains("foreign key") {
                         AppError::Conflict("Referenced resource does not exist".to_string())
                     } else {
@@ -140,6 +146,9 @@ impl<T> ToResponse<T> for Result<T, AppError> {
                     AppError::AlreadyExists(msg) => {
                         (ErrorType::Conflict, "Resource already exists", Some(msg))
                     }
+                    AppError::UsernameAlreadyExists(msg) => {
+                        (ErrorType::Conflict, "Username already exists", Some(msg))
+                    }
                     AppError::Conflict(msg) => {
                         (ErrorType::Conflict, "Resource conflict", Some(msg))
                     }
@@ -190,6 +199,9 @@ impl<T> ToResponse<T> for Result<T, AppError> {
                     }
                     AppError::AlreadyExists(msg) => {
                         (ErrorType::Conflict, "Resource already exists", Some(msg))
+                    }
+                    AppError::UsernameAlreadyExists(msg) => {
+                        (ErrorType::Conflict, "Username already exists", Some(msg))
                     }
                     AppError::Conflict(msg) => {
                         (ErrorType::Conflict, "Resource conflict", Some(msg))
@@ -254,6 +266,10 @@ impl AppError {
 
     pub fn email_already_exists(email: &str) -> Self {
         AppError::AlreadyExists(format!("Email {} already exists", email))
+    }
+
+    pub fn username_already_exists(username: &str) -> Self {
+        AppError::UsernameAlreadyExists(format!("Username {} already exists", username))
     }
 
     pub fn invalid_password() -> Self {
