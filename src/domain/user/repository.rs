@@ -7,6 +7,9 @@ use super::model::{User, UserRow};
 // Import error handling
 use crate::domain::error::AppError;
 
+// Import Transformer trait
+use crate::domain::Transformer;
+
 // UserRepository struct
 #[derive(Clone)]
 pub struct UserRepository {
@@ -19,7 +22,9 @@ impl UserRepository {
         Self { pool }
     }
 
-    pub async fn create(&self, user: &User) -> Result<User, AppError> {
+    pub async fn create<I: Transformer<User>>(&self, input: I) -> Result<User, AppError> {
+        let user = input.transform()?;
+
         let result = sqlx::query_as!(
              UserRow,
              r#"
@@ -43,7 +48,12 @@ impl UserRepository {
         Ok(result.into())
     }
 
-    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AppError> {
+    pub async fn find_by_id<I: Transformer<Uuid>>(
+        &self,
+        input: I,
+    ) -> Result<Option<User>, AppError> {
+        let id = input.transform()?;
+
         let user = sqlx::query_as!(
             UserRow,
             r#"
@@ -59,14 +69,19 @@ impl UserRepository {
         Ok(user.map(|u| u.into()))
     }
 
-    pub async fn find_by_email(&self, email: &str) -> Result<Option<User>, AppError> {
+    pub async fn find_by_email<I: Transformer<String>>(
+        &self,
+        input: I,
+    ) -> Result<Option<User>, AppError> {
+        let email = input.transform()?;
+
         let user = sqlx::query_as!(
             UserRow,
             r#"
               SELECT id, display_name, email, password_hash, role, status, created, updated
               FROM users WHERE email = $1
               "#,
-            email
+            &email
         )
         .fetch_optional(&self.pool)
         .await
@@ -90,7 +105,9 @@ impl UserRepository {
         Ok(users.into_iter().map(|u| u.into()).collect())
     }
 
-    pub async fn update(&self, user: &User) -> Result<User, AppError> {
+    pub async fn update<I: Transformer<User>>(&self, input: I) -> Result<User, AppError> {
+        let user = input.transform()?;
+
         let result = sqlx::query_as!(
              UserRow,
              r#"
@@ -114,7 +131,9 @@ impl UserRepository {
         Ok(result.into())
     }
 
-    pub async fn delete(&self, id: Uuid) -> Result<bool, AppError> {
+    pub async fn delete<I: Transformer<Uuid>>(&self, input: I) -> Result<bool, AppError> {
+        let id = input.transform()?;
+
         let result = sqlx::query!("DELETE FROM users WHERE id = $1", id)
             .execute(&self.pool)
             .await

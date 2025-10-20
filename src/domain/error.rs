@@ -275,4 +275,8 @@ impl AppError {
     pub fn forbidden(message: &str) -> Self {
         AppError::Forbidden(message.to_string())
     }
+
+    pub fn validation(message: &str) -> Self {
+        AppError::Validation(message.to_string())
+    }
 }

@@ -44,12 +44,12 @@ impl UserService {
         }
 
         // Check if email already exists
-        if self.repository.find_by_email(&email).await?.is_some() {
+        if self.repository.find_by_email(&email[..]).await?.is_some() {
             return Err(AppError::email_already_exists(&email));
         }
 
         let user = User::new(display_name, email, password_hash, role);
-        self.repository.create(&user).await
+        self.repository.create(user).await
     }
 
     pub async fn create_user_with_password(
@@ -120,7 +120,7 @@ impl UserService {
             }
 
             // Check if new email conflicts
-            if let Some(existing) = self.repository.find_by_email(&email).await? {
+            if let Some(existing) = self.repository.find_by_email(&email[..]).await? {
                 if existing.id != id {
                     return Err(AppError::email_already_exists(&email));
                 }
@@ -138,7 +138,7 @@ impl UserService {
 
         user.updated = chrono::Utc::now();
 
-        self.repository.update(&user).await
+        self.repository.update(user).await
     }
 
     pub async fn delete_user(&self, id: Uuid) -> Result<(), AppError> {
