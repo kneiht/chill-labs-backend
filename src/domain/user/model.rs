@@ -61,7 +61,7 @@ pub struct UserRow {
     pub id: Uuid,
     pub display_name: String,
     pub username: String,
-    pub email: String,
+    pub email: Option<String>,
     pub password_hash: String,
     pub role: String,
     pub status: String,
@@ -76,7 +76,7 @@ impl From<UserRow> for User {
             id: row.id,
             display_name: row.display_name,
             username: row.username,
-            email: row.email,
+            email: row.email.unwrap_or_default(),
             password_hash: row.password_hash,
             role: match row.role.as_str() {
                 "Student" => Role::Student,

@@ -56,10 +56,10 @@ impl UserService {
                 return Err(AppError::invalid_email_format(email));
             }
 
-            // Check if email already exists
-            if self.repository.find_by_email(email).await?.is_some() {
-                return Err(AppError::email_already_exists(email));
-            }
+             // Check if email already exists
+             if self.repository.find_by_email(email.as_str()).await?.is_some() {
+                 return Err(AppError::email_already_exists(email));
+             }
         }
 
         let user = User::new(display_name, username, email.unwrap_or_default(), password_hash, role);
@@ -165,12 +165,12 @@ impl UserService {
                 if !email.contains('@') {
                     return Err(AppError::invalid_email_format(&email));
                 }
-                // Check if new email conflicts
-                if let Some(existing) = self.repository.find_by_email(&email).await? {
-                    if existing.id != id {
-                        return Err(AppError::email_already_exists(&email));
-                    }
-                }
+                 // Check if new email conflicts
+                 if let Some(existing) = self.repository.find_by_email(email.as_str()).await? {
+                     if existing.id != id {
+                         return Err(AppError::email_already_exists(&email));
+                     }
+                 }
                 user.email = email;
             } else {
                 // If email is provided as empty string, set it to empty

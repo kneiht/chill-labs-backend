@@ -137,9 +137,3 @@ pub async fn delete_user(
         .await
         .to_response_no_content("User deleted successfully")
 }
-
-#[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub identifier: String, // Can be either email or username
-    pub password: String,
-}

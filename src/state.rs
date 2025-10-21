@@ -1,7 +1,6 @@
 use crate::utils::password::hash_password;
 use anyhow::Context;
 use sqlx::PgPool;
-use tracing;
 
 // User domain
 use crate::domain::user::model::Role;
@@ -68,7 +67,7 @@ async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
         .create_user(
             "Admin".to_string(),
             "admin".to_string(),
-            Some("admin".to_string()),
+            Some("admin@example.com".to_string()),
             password_hash,
             Role::Admin,
         )
