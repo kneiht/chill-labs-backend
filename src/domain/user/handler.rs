@@ -1,6 +1,8 @@
 use super::model::{Role, User, UserStatus};
+use super::service::{CreateUserInput, UpdateUserInput};
 use crate::domain::error::ToResponse;
 use crate::domain::response::Response;
+use crate::domain::Transformer;
 use crate::state::AppState;
 use crate::utils::password::hash_password;
 use axum::Json;
@@ -67,14 +69,16 @@ pub async fn create_user(
         }
     };
 
+    let create_input = CreateUserInput {
+        display_name: req.display_name,
+        username: req.username,
+        email: req.email,
+        password_hash,
+        role: Role::Student,
+    };
+
     user_service
-        .create_user(
-            req.display_name,
-            req.username,
-            req.email,
-            password_hash,
-            Role::Student,
-        )
+        .create_user(create_input)
         .await
         .map(|user| user.into())
         .to_response_created("User created successfully")
@@ -112,15 +116,17 @@ pub async fn update_user(
 ) -> Response<UserResponse> {
     let user_service = state.user_service.clone();
 
+    let update_input = UpdateUserInput {
+        id,
+        display_name: req.display_name,
+        username: req.username,
+        email: req.email,
+        role: req.role,
+        status: req.status,
+    };
+
     user_service
-        .update_user(
-            id,
-            req.display_name,
-            req.username,
-            req.email,
-            req.role,
-            req.status,
-        )
+        .update_user(update_input)
         .await
         .map(|user| user.into())
         .to_response("User updated successfully")
