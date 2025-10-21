@@ -26,7 +26,7 @@ impl UserService {
         &self,
         display_name: String,
         username: String,
-        email: String,
+        email: Option<String>,
         password_hash: String,
         role: Role,
     ) -> Result<User, AppError> {
@@ -39,27 +39,30 @@ impl UserService {
             return Err(AppError::missing_field("username"));
         }
 
-        if email.trim().is_empty() {
-            return Err(AppError::missing_field("email"));
-        }
-
-        // Basic email validation
-        if !email.contains('@') {
-            return Err(AppError::invalid_email_format(&email));
-        }
-
-        // Check if email already exists
-        if self.repository.find_by_email(&email[..]).await?.is_some() {
-            return Err(AppError::email_already_exists(&email));
-        }
-
         // Check if username already exists
         let existing_user = self.repository.find_by_username(&username[..]).await?;
         if existing_user.is_some() {
             return Err(AppError::username_already_exists(&username));
         }
 
-        let user = User::new(display_name, username, email, password_hash, role);
+        // Validate email if provided
+        if let Some(ref email) = email {
+            if email.trim().is_empty() {
+                return Err(AppError::missing_field("email"));
+            }
+
+            // Basic email validation
+            if !email.contains('@') {
+                return Err(AppError::invalid_email_format(email));
+            }
+
+            // Check if email already exists
+            if self.repository.find_by_email(email).await?.is_some() {
+                return Err(AppError::email_already_exists(email));
+            }
+        }
+
+        let user = User::new(display_name, username, email.unwrap_or_default(), password_hash, role);
         self.repository.create(user).await
     }
 
@@ -67,7 +70,7 @@ impl UserService {
         &self,
         display_name: String,
         username: String,
-        email: String,
+        email: Option<String>,
         password_hash: String,
         role: Role,
     ) -> Result<User, AppError> {
@@ -89,8 +92,28 @@ impl UserService {
             .ok_or_else(|| AppError::NotFound(format!("User with email {} not found", email)))
     }
 
+    pub async fn get_user_by_username(&self, username: &str) -> Result<User, AppError> {
+        self.repository
+            .find_by_username(username)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("User with username {} not found", username)))
+    }
+
     pub async fn authenticate_user(&self, email: &str, password: &str) -> Result<User, AppError> {
+        // For authentication, we need to use email since we're logging in with email
         let user = self.get_user_by_email(email).await?;
+
+        if !verify_password(password, &user.password_hash)
+            .map_err(|_| AppError::invalid_password())?
+        {
+            return Err(AppError::invalid_password());
+        }
+
+        Ok(user)
+    }
+
+    pub async fn authenticate_user_by_username(&self, username: &str, password: &str) -> Result<User, AppError> {
+        let user = self.get_user_by_username(username).await?;
 
         if !verify_password(password, &user.password_hash)
             .map_err(|_| AppError::invalid_password())?
@@ -138,21 +161,21 @@ impl UserService {
         }
 
         if let Some(email) = email {
-            if email.trim().is_empty() {
-                return Err(AppError::missing_field("email"));
-            }
-
-            if !email.contains('@') {
-                return Err(AppError::invalid_email_format(&email));
-            }
-
-            // Check if new email conflicts
-            if let Some(existing) = self.repository.find_by_email(&email[..]).await? {
-                if existing.id != id {
-                    return Err(AppError::email_already_exists(&email));
+            if !email.trim().is_empty() {
+                if !email.contains('@') {
+                    return Err(AppError::invalid_email_format(&email));
                 }
+                // Check if new email conflicts
+                if let Some(existing) = self.repository.find_by_email(&email).await? {
+                    if existing.id != id {
+                        return Err(AppError::email_already_exists(&email));
+                    }
+                }
+                user.email = email;
+            } else {
+                // If email is provided as empty string, set it to empty
+                user.email = String::new();
             }
-            user.email = email;
         }
 
         if let Some(role) = role {

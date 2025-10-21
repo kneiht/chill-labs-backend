@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n              INSERT INTO users (id, display_name, email, password_hash, role, status, created, updated)\n              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n              RETURNING id, display_name, email, password_hash, role, status, created, updated\n              ",
+  "query": "\n              UPDATE users\n              SET display_name = $2, username = $3, email = $4, password_hash = $5, role = $6, status = $7, updated = $8\n              WHERE id = $1\n              RETURNING id, display_name, username, email, password_hash, role, status, created, updated\n              ",
   "describe": {
     "columns": [
       {
@@ -15,31 +15,36 @@
       },
       {
         "ordinal": 2,
-        "name": "email",
+        "name": "username",
         "type_info": "Varchar"
       },
       {
         "ordinal": 3,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
         "name": "password_hash",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "role",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "status",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated",
         "type_info": "Timestamptz"
       }
@@ -49,10 +54,10 @@
         "Uuid",
         "Varchar",
         "Varchar",
+        "Varchar",
         "Text",
         "Text",
         "Text",
-        "Timestamptz",
         "Timestamptz"
       ]
     },
@@ -60,6 +65,7 @@
       false,
       false,
       false,
+      true,
       false,
       false,
       false,
@@ -67,5 +73,5 @@
       false
     ]
   },
-  "hash": "4c52ae1a27bc2ca03c767a8659d7f2e76b37210f65f0f826cb506a5b3d6bf780"
+  "hash": "f4be0b75e3984c2482a871f78d2911de11ae5afba612f117b3beeecbcf0fa046"
 }

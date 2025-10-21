@@ -11,7 +11,7 @@ use uuid::Uuid;
 pub struct CreateUserRequest {
     pub display_name: String,
     pub username: String,
-    pub email: String,
+    pub email: Option<String>,
     pub password: String,
 }
 
@@ -68,7 +68,13 @@ pub async fn create_user(
     };
 
     user_service
-        .create_user(req.display_name, req.username, req.email, password_hash, Role::Student)
+        .create_user(
+            req.display_name,
+            req.username,
+            req.email,
+            password_hash,
+            Role::Student,
+        )
         .await
         .map(|user| user.into())
         .to_response_created("User created successfully")
@@ -107,7 +113,14 @@ pub async fn update_user(
     let user_service = state.user_service.clone();
 
     user_service
-        .update_user(id, req.display_name, req.username, req.email, req.role, req.status)
+        .update_user(
+            id,
+            req.display_name,
+            req.username,
+            req.email,
+            req.role,
+            req.status,
+        )
         .await
         .map(|user| user.into())
         .to_response("User updated successfully")
@@ -123,4 +136,10 @@ pub async fn delete_user(
         .delete_user(id)
         .await
         .to_response_no_content("User deleted successfully")
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub identifier: String, // Can be either email or username
+    pub password: String,
 }

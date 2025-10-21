@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n              SELECT id, display_name, email, password_hash, role, status, created, updated\n              FROM users ORDER BY created DESC\n              ",
+  "query": "\n              SELECT id, display_name, username, email, password_hash, role, status, created, updated\n              FROM users WHERE id = $1\n              ",
   "describe": {
     "columns": [
       {
@@ -15,42 +15,50 @@
       },
       {
         "ordinal": 2,
-        "name": "email",
+        "name": "username",
         "type_info": "Varchar"
       },
       {
         "ordinal": 3,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
         "name": "password_hash",
         "type_info": "Text"
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "role",
         "type_info": "Text"
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "status",
         "type_info": "Text"
       },
       {
-        "ordinal": 6,
+        "ordinal": 7,
         "name": "created",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "updated",
         "type_info": "Timestamptz"
       }
     ],
     "parameters": {
-      "Left": []
+      "Left": [
+        "Uuid"
+      ]
     },
     "nullable": [
       false,
       false,
       false,
+      true,
       false,
       false,
       false,
@@ -58,5 +66,5 @@
       false
     ]
   },
-  "hash": "79d509a9118e4faa552459325d8b1e70ec37b2fa649de038a993055b6cbb2732"
+  "hash": "047e4f46a3f1ca56c58d3af32b6e3f650b190a6acadc7a5763a208964e4e9c2c"
 }

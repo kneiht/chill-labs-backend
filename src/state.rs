@@ -68,7 +68,7 @@ async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
         .create_user(
             "Admin".to_string(),
             "admin".to_string(),
-            "admin".to_string(),
+            Some("admin".to_string()),
             password_hash,
             Role::Admin,
         )
