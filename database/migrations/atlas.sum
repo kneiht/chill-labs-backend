@@ -1,3 +1,5 @@
-h1:RFliB2cgIndLVM+K78eR2avBitR5H9TbhC47bIl0GM0=
+h1:mAmPnv0A8CpYzLPQ07UXfbuXFon7qWcrq+B3LxHy/ZE=
 20251020184747_create_users.down.sql h1:WFFpEQONKyq7wTh7hAIa3TzLWecAWkWP2rtRT8/1l8U=
 20251020184747_create_users.up.sql h1:44WlSaP1XnoVquSyZIq6DG52p+hi35Zf2q0s26VJ3uA=
+20251022231414_remove_not_null_username.down.sql h1:SdtptNF2zrKmnT89GhMW0wldMoXtiQVAP075Ue9QemI=
+20251022231414_remove_not_null_username.up.sql h1:hmWrXQl4/tGvzUO2LKe621Q0BdmF2maJ8vLDw1PPZKU=
