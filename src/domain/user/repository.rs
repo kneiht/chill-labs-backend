@@ -22,8 +22,8 @@ impl UserRepository {
         Self { pool }
     }
 
-    pub async fn create<I: Transformer<User>>(&self, input: I) -> Result<User, AppError> {
-        let user = input.transform()?;
+    pub async fn create<T: Transformer<User>>(&self, to_user: T) -> Result<User, AppError> {
+        let user = to_user.transform()?;
 
         let result = sqlx::query_as!(
              UserRow,
@@ -49,12 +49,7 @@ impl UserRepository {
         Ok(result.into())
     }
 
-    pub async fn find_by_id<I: Transformer<Uuid>>(
-        &self,
-        input: I,
-    ) -> Result<Option<User>, AppError> {
-        let id = input.transform()?;
-
+    pub async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, AppError> {
         let user = sqlx::query_as!(
             UserRow,
             r#"
@@ -70,11 +65,11 @@ impl UserRepository {
         Ok(user.map(|u| u.into()))
     }
 
-    pub async fn find_by_email<I: Transformer<String>>(
+    pub async fn find_by_email<T: Transformer<String>>(
         &self,
-        input: I,
+        to_email: T,
     ) -> Result<Option<User>, AppError> {
-        let email = input.transform()?;
+        let email = to_email.transform()?;
 
         let user = sqlx::query_as!(
             UserRow,
@@ -106,8 +101,8 @@ impl UserRepository {
         Ok(users.into_iter().map(|u| u.into()).collect())
     }
 
-    pub async fn update<I: Transformer<User>>(&self, input: I) -> Result<User, AppError> {
-        let user = input.transform()?;
+    pub async fn update<T: Transformer<User>>(&self, to_user: T) -> Result<User, AppError> {
+        let user = to_user.transform()?;
 
         let result = sqlx::query_as!(
              UserRow,
@@ -133,11 +128,11 @@ impl UserRepository {
         Ok(result.into())
     }
 
-    pub async fn find_by_username<I: Transformer<String>>(
+    pub async fn find_by_username<T: Transformer<String>>(
         &self,
-        input: I,
+        to_username: T,
     ) -> Result<Option<User>, AppError> {
-        let username = input.transform()?;
+        let username = to_username.transform()?;
 
         let user = sqlx::query_as!(
             UserRow,
@@ -154,9 +149,7 @@ impl UserRepository {
         Ok(user.map(|u| u.into()))
     }
 
-    pub async fn delete<I: Transformer<Uuid>>(&self, input: I) -> Result<bool, AppError> {
-        let id = input.transform()?;
-
+    pub async fn delete(&self, id: Uuid) -> Result<bool, AppError> {
         let result = sqlx::query!("DELETE FROM users WHERE id = $1", id)
             .execute(&self.pool)
             .await

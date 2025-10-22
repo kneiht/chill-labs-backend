@@ -12,6 +12,7 @@ pub enum AppError {
     InvalidEmail(String),
     InvalidPassword(String),
     MissingField(String),
+    UserValidationError(String),
 
     // Business logic errors
     NotFound(String),
@@ -42,6 +43,7 @@ impl fmt::Display for AppError {
             AppError::InvalidEmail(msg) => write!(f, "Invalid email: {}", msg),
             AppError::InvalidPassword(msg) => write!(f, "Invalid password: {}", msg),
             AppError::MissingField(msg) => write!(f, "Missing field: {}", msg),
+            AppError::UserValidationError(msg) => write!(f, "User validation error: {}", msg),
             AppError::NotFound(msg) => write!(f, "Not found: {}", msg),
             AppError::AlreadyExists(msg) => write!(f, "Already exists: {}", msg),
             AppError::UsernameAlreadyExists(msg) => write!(f, "Username already exists: {}", msg),
@@ -114,6 +116,13 @@ impl From<serde_json::Error> for AppError {
     }
 }
 
+// Implement the From trait for UserValidationError
+impl From<crate::domain::user::model::UserValidationError> for AppError {
+    fn from(err: crate::domain::user::model::UserValidationError) -> Self {
+        AppError::UserValidationError(err.message)
+    }
+}
+
 /// Extension trait to convert AppError to Response
 pub trait ToResponse<T> {
     fn to_response(self, success_message: &str) -> Response<T>;
@@ -139,6 +148,9 @@ impl<T> ToResponse<T> for Result<T, AppError> {
                     }
                     AppError::MissingField(msg) => {
                         (ErrorType::Validation, "Missing required field", Some(msg))
+                    }
+                    AppError::UserValidationError(msg) => {
+                        (ErrorType::Validation, "User validation failed", Some(msg))
                     }
                     AppError::NotFound(msg) => {
                         (ErrorType::NotFound, "Resource not found", Some(msg))
@@ -193,6 +205,9 @@ impl<T> ToResponse<T> for Result<T, AppError> {
                     }
                     AppError::MissingField(msg) => {
                         (ErrorType::Validation, "Missing required field", Some(msg))
+                    }
+                    AppError::UserValidationError(msg) => {
+                        (ErrorType::Validation, "User validation failed", Some(msg))
                     }
                     AppError::NotFound(msg) => {
                         (ErrorType::NotFound, "Resource not found", Some(msg))

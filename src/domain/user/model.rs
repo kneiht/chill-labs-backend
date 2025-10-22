@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use validator::Validate;
 
 // Role enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -18,12 +19,15 @@ pub enum UserStatus {
 }
 
 // User struct
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct User {
     pub id: Uuid,
-    pub display_name: String,
-    pub username: String,
-    pub email: String,
+    #[validate(length(min = 1, message = "Display name cannot be empty"))]
+    pub display_name: Option<String>,
+    #[validate(length(min = 1, message = "Username cannot be empty when provided"))]
+    pub username: Option<String>,
+    pub email: Option<String>,
+    #[validate(length(min = 8, message = "Password hash must be at least 8 characters"))]
     pub password_hash: String,
     pub role: Role,
     pub status: UserStatus,
@@ -31,16 +35,34 @@ pub struct User {
     pub updated: chrono::DateTime<chrono::Utc>,
 }
 
+// Validation error for User
+#[derive(Debug, Clone)]
+pub struct UserValidationError {
+    pub message: String,
+}
+
+impl std::fmt::Display for UserValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.message)
+    }
+}
+
+impl std::error::Error for UserValidationError {}
+
 // Implementation of User
 impl User {
     pub fn new(
-        display_name: String,
-        username: String,
-        email: String,
+        display_name: Option<String>,
+        username: Option<String>,
+        email: Option<String>,
         password_hash: String,
         role: Role,
     ) -> Self {
         let now = chrono::Utc::now();
+
+        // TODO: Validate that at least one of username or email is provided
+
+        // Return a new instance of User
         Self {
             id: Uuid::now_v7(),
             display_name,
@@ -59,8 +81,8 @@ impl User {
 #[derive(sqlx::FromRow)]
 pub struct UserRow {
     pub id: Uuid,
-    pub display_name: String,
-    pub username: String,
+    pub display_name: Option<String>,
+    pub username: Option<String>,
     pub email: Option<String>,
     pub password_hash: String,
     pub role: String,
@@ -76,7 +98,7 @@ impl From<UserRow> for User {
             id: row.id,
             display_name: row.display_name,
             username: row.username,
-            email: row.email.unwrap_or_default(),
+            email: row.email,
             password_hash: row.password_hash,
             role: match row.role.as_str() {
                 "Student" => Role::Student,

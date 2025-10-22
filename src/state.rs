@@ -64,17 +64,14 @@ async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
 
     // Create admin user
     let create_input = crate::domain::user::service::CreateUserInput {
-        display_name: "Admin".to_string(),
-        username: "admin".to_string(),
+        display_name: Some("Admin".to_string()),
+        username: Some("admin".to_string()),
         email: Some("admin@example.com".to_string()),
         password_hash,
         role: Role::Admin,
     };
 
-    match user_service
-        .create_user(create_input)
-        .await
-    {
+    match user_service.create_user(create_input).await {
         Ok(_) => tracing::info!("Admin user seeded successfully"),
         Err(e) => tracing::warn!("Failed to seed admin user: {}", e),
     }

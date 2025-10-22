@@ -8,9 +8,7 @@ use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::healthcheck::handler::healthcheck;
-use crate::domain::user::handler::{
-    create_user, delete_user, get_all_users, get_user, update_user,
-};
+use crate::domain::user::user_routes;
 
 use crate::state::AppState;
 
@@ -30,11 +28,7 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
-        .route("/api/users", post(create_user))
-        .route("/api/users", get(get_all_users))
-        .route("/api/users/{id}", get(get_user))
-        .route("/api/users/{id}", put(update_user))
-        .route("/api/users/{id}", delete(delete_user))
+        .nest("/api/users", user_routes())
         .with_state(state.clone())
         .layer(cors);
 

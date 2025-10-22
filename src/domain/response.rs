@@ -135,24 +135,6 @@ impl<T: Serialize> IntoResponse for Response<T> {
             }
         };
 
-        // Build response dynamically to exclude null fields
-        let mut body = serde_json::Map::new();
-        body.insert("success".to_string(), json!(self.success));
-        body.insert("message".to_string(), json!(self.message));
-        body.insert("status".to_string(), json!(self.status));
-        
-        if let Some(data) = self.data {
-            body.insert("data".to_string(), json!(data));
-        }
-        
-        if let Some(error) = self.error {
-            body.insert("error".to_string(), json!(error));
-        }
-        
-        if let Some(pagination) = self.pagination {
-            body.insert("pagination".to_string(), json!(pagination));
-        }
-
-        (status_code, Json(body)).into_response()
+        (status_code, Json(self)).into_response()
     }
 }
