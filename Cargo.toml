@@ -49,3 +49,7 @@ rand = { version = "0.9", features = ["std"] }
 thiserror = "2.0"
 axum-extra = { version = "0.10.1", features = ["cookie"] }
 async-trait = "0.1.89"
+
+[[bin]]
+name = "scratch"
+path = "src/bin/scratch.rs"

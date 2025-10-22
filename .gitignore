@@ -26,4 +26,5 @@ scripts/static-files.tar.gz
 
 # Private files and folders
 \#*
-database/backups/backup_english-coaching-postgres_20251010_163823.sql
+scratch.rs
+backups/
