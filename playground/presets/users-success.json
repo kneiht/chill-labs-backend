@@ -1,38 +1,39 @@
- [
-   {
-     "label": "GET /api/users",
-     "method": "GET",
-     "path": "/api/users"
-   },
-    {
-      "label": "POST /api/users",
-      "method": "POST",
-      "path": "/api/users",
-      "body": {
-        "display_name": "Admin User",
-        "email": "admin@example.com",
-        "password": "adminpass"
-      }
-    },
-   {
-     "label": "GET /api/users/{id}",
-     "method": "GET",
-     "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7"
-   },
-   {
-     "label": "PUT /api/users/{id}",
-     "method": "PUT",
-     "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7",
-     "body": {
-       "display_name": "John Doe Updated",
-       "email": "john.doe.updated@example.com",
-       "role": "Teacher",
-       "status": "Active"
-     }
-   },
-   {
-     "label": "DELETE /api/users/{id}",
-     "method": "DELETE",
-     "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7"
-   }
- ]
+[
+  {
+    "label": "GET /api/users",
+    "method": "GET",
+    "path": "/api/users"
+  },
+  {
+    "label": "POST /api/users",
+    "method": "POST",
+    "path": "/api/users",
+    "body": {
+      "display_name": "Admin User",
+      "email": "admin@example.com",
+      "password": "adminpass123"
+    }
+  },
+  {
+    "label": "GET /api/users/{id}",
+    "method": "GET",
+    "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7"
+  },
+  {
+    "label": "PUT /api/users/{id}",
+    "method": "PUT",
+    "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7",
+    "body": {
+      "display_name": "John Doe Updated",
+      "email": "john.doe.updated@example.com",
+      "username": "johndoeupdated",
+      "role": "Teacher",
+      "status": "Active"
+    }
+  },
+  {
+    "label": "DELETE /api/users/{id}",
+    "method": "DELETE",
+    "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7"
+  }
+]
