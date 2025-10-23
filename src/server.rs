@@ -1,9 +1,6 @@
 use anyhow::Context;
 use axum::http::Method;
-use axum::{
-    routing::{delete, get, post, put},
-    Router,
-};
+use axum::{routing::get, Router};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
