@@ -4,6 +4,7 @@ use axum::{routing::get, Router};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::domain::auth::auth_routes;
 use crate::domain::healthcheck::handler::healthcheck;
 use crate::domain::note::note_routes;
 use crate::domain::user::user_routes;
@@ -26,6 +27,7 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // Routes
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
+        .nest("/api/auth", auth_routes())
         .nest("/api/users", user_routes())
         .nest("/api/notes", note_routes())
         .with_state(state.clone())

@@ -14,6 +14,7 @@ pub struct Claims {
 }
 
 // JWT utility struct
+#[derive(Clone)]
 pub struct JwtUtil {
     encoding_key: EncodingKey,
     decoding_key: DecodingKey,

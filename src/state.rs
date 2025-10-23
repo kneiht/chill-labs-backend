@@ -11,6 +11,9 @@ use crate::domain::user::service::UserService;
 use crate::domain::note::repository::NoteRepository;
 use crate::domain::note::service::NoteService;
 
+// Auth domain
+use crate::domain::auth::service::AuthService;
+
 // Settings
 use crate::settings::Settings;
 
@@ -19,6 +22,7 @@ pub struct AppState {
     pub settings: Settings,
     pub user_service: UserService,
     pub note_service: NoteService,
+    pub auth_service: AuthService,
 }
 
 impl AppState {
@@ -27,15 +31,25 @@ impl AppState {
 
         // Initialize repositories and services
         let user_repository = UserRepository::new(pool.clone());
-        let user_service = UserService::new(user_repository);
+        let user_service = UserService::new(user_repository.clone());
 
         let note_repository = NoteRepository::new(pool.clone());
         let note_service = NoteService::new(note_repository);
+
+        // Initialize auth service with JWT configuration
+        let jwt_secret = settings
+            .jwt
+            .secret
+            .clone()
+            .unwrap_or_else(|| "default_secret_change_in_production".to_string());
+        let jwt_expiration_hours = settings.jwt.expiration_hours.unwrap_or(24);
+        let auth_service = AuthService::new(user_repository, &jwt_secret, jwt_expiration_hours);
 
         Ok(Self {
             settings: settings.clone(),
             user_service,
             note_service,
+            auth_service,
         })
     }
 }

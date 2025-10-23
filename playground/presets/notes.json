@@ -1,41 +1,74 @@
 [
   {
-    "label": "GET /api/notes",
+    "label": "GET /api/notes - Get all notes",
     "method": "GET",
     "path": "/api/notes"
   },
   {
-    "label": "POST /api/notes",
+    "label": "POST /api/notes - Create note",
     "method": "POST",
     "path": "/api/notes",
     "body": {
-      "title": "Sample Note",
-      "content": "This is a sample note content.",
-      "user_id": "01997199-4f31-7718-a766-687e926dd0c7"
+      "user_id": "01997199-4f31-7718-a766-687e926dd0c7",
+      "title": "My First English Lesson",
+      "content": "Today I learned about past tense verbs. The key points are: regular verbs add -ed, irregular verbs have unique forms."
     }
   },
   {
-    "label": "GET /api/notes/{id}",
+    "label": "POST /api/notes - Create note (Grammar)",
+    "method": "POST",
+    "path": "/api/notes",
+    "body": {
+      "user_id": "01997199-4f31-7718-a766-687e926dd0c7",
+      "title": "Grammar Rules - Present Perfect",
+      "content": "Present perfect is formed with have/has + past participle. Used for actions that started in the past and continue to the present."
+    }
+  },
+  {
+    "label": "POST /api/notes - Create note (Vocabulary)",
+    "method": "POST",
+    "path": "/api/notes",
+    "body": {
+      "user_id": "01997199-4f31-7718-a766-687e926dd0c7",
+      "title": "New Vocabulary Words",
+      "content": "Words learned today: meticulous (careful attention to detail), ephemeral (lasting for a short time), ubiquitous (present everywhere)."
+    }
+  },
+  {
+    "label": "GET /api/notes/{id} - Get specific note",
     "method": "GET",
     "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8"
   },
   {
-    "label": "PUT /api/notes/{id}",
+    "label": "PUT /api/notes/{id} - Update note (title & content)",
     "method": "PUT",
     "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8",
     "body": {
-      "title": "Updated Note Title",
-      "content": "This note content has been updated."
+      "title": "Updated: My First English Lesson",
+      "content": "Today I learned about past tense verbs. Updated: Regular verbs add -ed, irregular verbs have unique forms like go→went, see→saw."
     }
   },
   {
-    "label": "DELETE /api/notes/{id}",
-    "method": "DELETE",
-    "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8"
+    "label": "PUT /api/notes/{id} - Update note (content only)",
+    "method": "PUT",
+    "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8",
+    "body": {
+      "content": "Additional notes: Practice makes perfect. Remember to review these verbs daily."
+    }
   },
   {
-    "label": "GET /api/users/{user_id}/notes",
-    "method": "GET",
-    "path": "/api/users/01997199-4f31-7718-a766-687e926dd0c7/notes"
+    "label": "PUT /api/notes/{id} - Update note (with user_id)",
+    "method": "PUT",
+    "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8",
+    "body": {
+      "user_id": "01997199-4f31-7718-a766-687e926dd0c7",
+      "title": "Transferred Note",
+      "content": "This note has been updated with a new user_id."
+    }
+  },
+  {
+    "label": "DELETE /api/notes/{id} - Delete note",
+    "method": "DELETE",
+    "path": "/api/notes/01997199-4f31-7718-a766-687e926dd0c8"
   }
 ]
