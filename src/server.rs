@@ -5,6 +5,7 @@ use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::healthcheck::handler::healthcheck;
+use crate::domain::note::note_routes;
 use crate::domain::user::user_routes;
 
 use crate::state::AppState;
@@ -26,6 +27,7 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/api/healthcheck", get(healthcheck))
         .nest("/api/users", user_routes())
+        .nest("/api/notes", note_routes())
         .with_state(state.clone())
         .layer(cors);
 

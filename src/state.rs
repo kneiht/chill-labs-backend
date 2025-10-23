@@ -7,6 +7,10 @@ use crate::domain::user::model::Role;
 use crate::domain::user::repository::UserRepository;
 use crate::domain::user::service::UserService;
 
+// Note domain
+use crate::domain::note::repository::NoteRepository;
+use crate::domain::note::service::NoteService;
+
 // Settings
 use crate::settings::Settings;
 
@@ -14,6 +18,7 @@ use crate::settings::Settings;
 pub struct AppState {
     pub settings: Settings,
     pub user_service: UserService,
+    pub note_service: NoteService,
 }
 
 impl AppState {
@@ -24,9 +29,13 @@ impl AppState {
         let user_repository = UserRepository::new(pool.clone());
         let user_service = UserService::new(user_repository);
 
+        let note_repository = NoteRepository::new(pool.clone());
+        let note_service = NoteService::new(note_repository);
+
         Ok(Self {
             settings: settings.clone(),
             user_service,
+            note_service,
         })
     }
 }
@@ -54,7 +63,11 @@ async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
     let user_service = UserService::new(user_repository);
 
     // Check if admin user already exists
-    if user_service.get_user_by_email("admin").await.is_ok() {
+    if user_service
+        .get_user_by_email("admin@example.com")
+        .await
+        .is_ok()
+    {
         tracing::info!("Admin user already exists, skipping seed");
         return Ok(());
     }
