@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::authorization::OwnedResource;
+
 // Note struct
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct Note {
@@ -13,6 +15,13 @@ pub struct Note {
     pub content: String,
     pub created: chrono::DateTime<chrono::Utc>,
     pub updated: chrono::DateTime<chrono::Utc>,
+}
+
+// Implementation of OwnedResource for Note
+impl OwnedResource for Note {
+    fn owner_id(&self) -> Uuid {
+        self.user_id
+    }
 }
 
 // Implementation of Note

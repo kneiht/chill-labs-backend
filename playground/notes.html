@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --scroll-track: #0f172a;
+      --scroll-thumb: #334155;
+      --scroll-thumb-hover: #475569;
+      --scroll-corner: #0b1228;
+    }
+
+    /* Firefox */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+    }
+
+    /* WebKit */
+    *::-webkit-scrollbar {
+      width: 12px;
+      height: 12px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: var(--scroll-track);
+      border-radius: 9999px;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg,
+          rgba(51, 65, 85, 0.95),
+          rgba(30, 41, 59, 0.95));
+      border: 2px solid var(--scroll-track);
+      border-radius: 9999px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: var(--scroll-thumb-hover);
+    }
+
+    *::-webkit-scrollbar-corner {
+      background: var(--scroll-corner);
+    }
+
+    .note-card {
+      transition: all 0.2s;
+    }
+
+    .note-card:hover {
+      transform: translateY(-2px);
+      border-color: #475569;
+    }
+
+    .btn-primary {
+      background-color: #4f46e5;
+      transition: background-color 0.2s;
+    }
+
+    .btn-primary:hover {
+      background-color: #4338ca;
+    }
+
+    .btn-secondary {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      transition: all 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background-color: #334155;
+      border-color: #475569;
+    }
+
+    .btn-danger {
+      background-color: #dc2626;
+      transition: background-color 0.2s;
+    }
+
+    .btn-danger:hover {
+      background-color: #b91c1c;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-950 text-slate-100">
+  <div class="max-w-7xl mx-auto p-4">
+    <!-- Header -->
+    <header class="mb-6">
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold text-indigo-400">📝 Notes App</h1>
+        <div id="user-info" class="hidden flex items-center gap-3">
+          <span class="text-sm text-slate-400">
+            Logged in as: <span id="user-name" class="text-slate-200 font-medium"></span>
+          </span>
+          <button id="btn-logout" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium">
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Auth Section -->
+    <section id="auth-section" class="max-w-md mx-auto">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Login or Register</h2>
+
+        <!-- Tab Buttons -->
+        <div class="flex gap-2 mb-4">
+          <button id="tab-login" class="btn-primary flex-1 px-4 py-2 rounded-md text-sm font-medium">
+            Login
+          </button>
+          <button id="tab-register" class="btn-secondary flex-1 px-4 py-2 rounded-md text-sm font-medium">
+            Register
+          </button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="login-form" class="grid gap-4">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Email or Username</label>
+            <input id="login-username" type="text" required
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Password</label>
+            <input id="login-password" type="password" required
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">
+            Login
+          </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="register-form" class="grid gap-4 hidden">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Display Name</label>
+            <input id="register-name" type="text" required
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Email</label>
+            <input id="register-email" type="email"
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Username</label>
+            <input id="register-username" type="text"
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Password</label>
+            <input id="register-password" type="password" required
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">
+            Register
+          </button>
+        </form>
+
+        <div id="auth-message" class="mt-4 text-sm text-center"></div>
+      </div>
+    </section>
+
+    <!-- Notes Section -->
+    <section id="notes-section" class="hidden">
+      <!-- Create/Edit Note Form -->
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg mb-6">
+        <h2 id="form-title" class="text-xl font-semibold mb-4">Create New Note</h2>
+        <form id="note-form" class="grid gap-4">
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Title</label>
+            <input id="note-title" type="text" required placeholder="Enter note title..."
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Content</label>
+            <textarea id="note-content" required placeholder="Write your note here..." rows="6"
+              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500"></textarea>
+          </div>
+          <div class="flex gap-3">
+            <button type="submit" id="btn-save-note" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">
+              Save Note
+            </button>
+            <button type="button" id="btn-cancel-edit"
+              class="btn-secondary px-4 py-2 rounded-md text-sm font-medium hidden">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Notes List -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">My Notes</h2>
+          <button id="btn-refresh" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium">
+            🔄 Refresh
+          </button>
+        </div>
+        <div id="notes-container" class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <!-- Notes will be loaded here -->
+        </div>
+        <div id="notes-empty" class="text-center py-12 text-slate-400 hidden">
+          <p class="text-lg">No notes yet. Create your first note above! 📝</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-8 text-center text-xs text-slate-400">
+      English Coaching Notes App
+    </footer>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+    const $ = (id) => document.getElementById(id);
+
+    let authToken = localStorage.getItem('notes-token') || '';
+    let currentUser = null;
+    let editingNoteId = null;
+
+    // Utility functions
+    function showMessage(message, isError = false) {
+      const el = $('auth-message');
+      el.textContent = message;
+      el.className = `mt-4 text-sm text-center ${isError ? 'text-red-400' : 'text-green-400'}`;
+    }
+
+    function showAuthSection() {
+      $('auth-section').classList.remove('hidden');
+      $('notes-section').classList.add('hidden');
+      $('user-info').classList.add('hidden');
+    }
+
+    function showNotesSection() {
+      $('auth-section').classList.add('hidden');
+      $('notes-section').classList.remove('hidden');
+      $('user-info').classList.remove('hidden');
+    }
+
+    async function apiCall(endpoint, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      };
+
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Request failed');
+      }
+
+      return data;
+    }
+
+    // Auth functions
+    async function login(e) {
+      e.preventDefault();
+      try {
+        const username = $('login-username').value;
+        const password = $('login-password').value;
+
+        const data = await apiCall('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            login: username,
+            password: password,
+          }),
+        });
+
+        authToken = data.data.access_token;
+        localStorage.setItem('notes-token', authToken);
+        await loadCurrentUser();
+        showNotesSection();
+        await loadNotes();
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    }
+
+    async function register(e) {
+      e.preventDefault();
+      try {
+        const name = $('register-name').value;
+        const email = $('register-email').value;
+        const username = $('register-username').value;
+        const password = $('register-password').value;
+
+        const body = {
+          display_name: name,
+          password: password,
+        };
+
+        if (email) body.email = email;
+        if (username) body.username = username;
+
+        const data = await apiCall('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+
+        authToken = data.data.access_token;
+        localStorage.setItem('notes-token', authToken);
+        await loadCurrentUser();
+        showNotesSection();
+        await loadNotes();
+      } catch (error) {
+        showMessage(error.message, true);
+      }
+    }
+
+    async function loadCurrentUser() {
+      try {
+        const data = await apiCall('/api/auth/me');
+        currentUser = data.data;
+        $('user-name').textContent = currentUser.display_name || currentUser.username || currentUser.email || 'User';
+      } catch (error) {
+        console.error('Failed to load user:', error);
+        logout();
+      }
+    }
+
+    function logout() {
+      authToken = '';
+      currentUser = null;
+      localStorage.removeItem('notes-token');
+      showAuthSection();
+      $('note-form').reset();
+    }
+
+    // Notes functions
+    async function loadNotes() {
+      try {
+        const data = await apiCall('/api/notes');
+        const notes = data.data;
+        const container = $('notes-container');
+        const empty = $('notes-empty');
+
+        if (notes.length === 0) {
+          container.innerHTML = '';
+          empty.classList.remove('hidden');
+          return;
+        }
+
+        empty.classList.add('hidden');
+        container.innerHTML = notes.map(note => `
+          <div class="note-card rounded-lg border border-slate-800 bg-slate-900/60 p-4 shadow">
+            <h3 class="text-lg font-semibold mb-2 text-indigo-300">${escapeHtml(note.title)}</h3>
+            <p class="text-sm text-slate-300 mb-3 whitespace-pre-wrap">${escapeHtml(note.content)}</p>
+            <div class="text-xs text-slate-500 mb-3">
+              <div>Created: ${new Date(note.created).toLocaleString()}</div>
+              <div>Updated: ${new Date(note.updated).toLocaleString()}</div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editNote('${note.id}')" class="btn-secondary flex-1 px-3 py-1.5 rounded text-xs font-medium">
+                ✏️ Edit
+              </button>
+              <button onclick="deleteNote('${note.id}')" class="btn-danger flex-1 px-3 py-1.5 rounded text-xs font-medium">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Failed to load notes:', error);
+        alert('Failed to load notes: ' + error.message);
+      }
+    }
+
+    async function createOrUpdateNote(e) {
+      e.preventDefault();
+      try {
+        const title = $('note-title').value;
+        const content = $('note-content').value;
+
+        const body = {
+          title,
+          content,
+        };
+
+        if (editingNoteId) {
+          // Update existing note
+          await apiCall(`/api/notes/${editingNoteId}`, {
+            method: 'PUT',
+            body: JSON.stringify(body),
+          });
+          editingNoteId = null;
+          $('form-title').textContent = 'Create New Note';
+          $('btn-save-note').textContent = 'Save Note';
+          $('btn-cancel-edit').classList.add('hidden');
+        } else {
+          // Create new note
+          body.user_id = currentUser.id;
+          await apiCall('/api/notes', {
+            method: 'POST',
+            body: JSON.stringify(body),
+          });
+        }
+
+        $('note-form').reset();
+        await loadNotes();
+      } catch (error) {
+        alert('Failed to save note: ' + error.message);
+      }
+    }
+
+    async function editNote(noteId) {
+      try {
+        const data = await apiCall(`/api/notes/${noteId}`);
+        const note = data.data;
+
+        editingNoteId = noteId;
+        $('note-title').value = note.title;
+        $('note-content').value = note.content;
+        $('form-title').textContent = 'Edit Note';
+        $('btn-save-note').textContent = 'Update Note';
+        $('btn-cancel-edit').classList.remove('hidden');
+
+        // Scroll to form
+        $('note-form').scrollIntoView({ behavior: 'smooth' });
+      } catch (error) {
+        alert('Failed to load note: ' + error.message);
+      }
+    }
+
+    async function deleteNote(noteId) {
+      if (!confirm('Are you sure you want to delete this note?')) {
+        return;
+      }
+
+      try {
+        await apiCall(`/api/notes/${noteId}`, {
+          method: 'DELETE',
+        });
+        await loadNotes();
+      } catch (error) {
+        alert('Failed to delete note: ' + error.message);
+      }
+    }
+
+    function cancelEdit() {
+      editingNoteId = null;
+      $('note-form').reset();
+      $('form-title').textContent = 'Create New Note';
+      $('btn-save-note').textContent = 'Save Note';
+      $('btn-cancel-edit').classList.add('hidden');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    $('tab-login').addEventListener('click', () => {
+      $('login-form').classList.remove('hidden');
+      $('register-form').classList.add('hidden');
+      $('tab-login').classList.remove('btn-secondary');
+      $('tab-login').classList.add('btn-primary');
+      $('tab-register').classList.remove('btn-primary');
+      $('tab-register').classList.add('btn-secondary');
+    });
+
+    $('tab-register').addEventListener('click', () => {
+      $('login-form').classList.add('hidden');
+      $('register-form').classList.remove('hidden');
+      $('tab-register').classList.remove('btn-secondary');
+      $('tab-register').classList.add('btn-primary');
+      $('tab-login').classList.remove('btn-primary');
+      $('tab-login').classList.add('btn-secondary');
+    });
+
+    $('login-form').addEventListener('submit', login);
+    $('register-form').addEventListener('submit', register);
+    $('btn-logout').addEventListener('click', logout);
+    $('note-form').addEventListener('submit', createOrUpdateNote);
+    $('btn-cancel-edit').addEventListener('click', cancelEdit);
+    $('btn-refresh').addEventListener('click', loadNotes);
+
+    // Make functions globally accessible for onclick handlers
+    window.editNote = editNote;
+    window.deleteNote = deleteNote;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (authToken) {
+        try {
+          await loadCurrentUser();
+          showNotesSection();
+          await loadNotes();
+        } catch (error) {
+          showAuthSection();
+        }
+      } else {
+        showAuthSection();
+      }
+    });
+  </script>
+</body>
+
+</html>

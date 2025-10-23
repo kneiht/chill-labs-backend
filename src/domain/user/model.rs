@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::Validate;
 
+use crate::authorization::OwnedResource;
+
 // Role enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Role {
@@ -48,6 +50,14 @@ impl std::fmt::Display for UserValidationError {
 }
 
 impl std::error::Error for UserValidationError {}
+
+// Implementation of OwnedResource for User
+// For User, the owner is themselves (their own id)
+impl OwnedResource for User {
+    fn owner_id(&self) -> Uuid {
+        self.id
+    }
+}
 
 // Implementation of User
 impl User {

@@ -1,9 +1,12 @@
 use anyhow::Context;
-use axum::http::Method;
+use axum::http::{Method, StatusCode, Uri};
 use axum::middleware;
+use axum::response::{IntoResponse, Json};
+use axum::routing::get_service;
 use axum::Router;
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeFile;
 
 use crate::domain::auth::auth_routes;
 use crate::domain::healthcheck::healthcheck_routes;
@@ -11,8 +14,19 @@ use crate::domain::note::note_routes;
 use crate::domain::user::user_routes;
 use crate::middleware::auth_middleware;
 
+use serde_json::json;
+
 use crate::state::AppState;
 
+/// Fallback handler for 404 Not Found errors.
+async fn fallback(uri: Uri) -> impl IntoResponse {
+    let message = format!("Route '{}' not found", uri.path());
+    let body = Json(json!({ "success": false, "message": message }));
+
+    (StatusCode::NOT_FOUND, body)
+}
+
+/// Serve the application routes
 pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // CORS setup
     let cors = CorsLayer::new()
@@ -39,7 +53,9 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     let app = Router::new()
         .nest("/api/healthcheck", healthcheck_routes())
         .nest("/api/auth", auth_routes())
+        .route("/admin", get_service(ServeFile::new("static/admin.html")))
         .merge(protected_routes)
+        .fallback(fallback)
         .with_state(state.clone())
         .layer(cors);
 

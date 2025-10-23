@@ -1,5 +1,7 @@
 use super::model::Note;
 use super::repository::NoteRepository;
+use crate::authorization::get_ownership_filter;
+use crate::domain::user::model::User;
 use uuid::Uuid;
 use validator::Validate;
 
@@ -44,3 +46,31 @@ crate::crud_service!(
         }
     }
 );
+
+// Additional methods for NoteService
+impl NoteService {
+    /// Get notes filtered by user role:
+    /// - Admins see all notes
+    /// - Regular users see only their own notes
+    pub async fn get_notes_by_user(
+        &self,
+        user: &User,
+    ) -> Result<Vec<Note>, crate::domain::error::AppError> {
+        match get_ownership_filter(user) {
+            None => {
+                // Admin - get all notes
+                self.repository
+                    .find_all()
+                    .await
+                    .map_err(crate::domain::error::AppError::from)
+            }
+            Some(user_id) => {
+                // Regular user - get only their notes
+                self.repository
+                    .find_by_user_id(user_id)
+                    .await
+                    .map_err(crate::domain::error::AppError::from)
+            }
+        }
+    }
+}

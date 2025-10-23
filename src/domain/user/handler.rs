@@ -5,16 +5,12 @@ use uuid::Uuid;
 
 use super::model::{Role, User, UserStatus};
 use super::service::{CreateUserInput, UpdateUserInput};
+use crate::authorization::can_access_resource;
 use crate::domain::error::ToResponse;
 use crate::domain::response::Response;
 use crate::state::AppState;
 
 use crate::utils::password::hash_password;
-
-/// Helper function to check if user has permission to access a resource
-fn can_access_user(authenticated_user: &User, target_user_id: Uuid) -> bool {
-    authenticated_user.role == Role::Admin || authenticated_user.id == target_user_id
-}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
@@ -102,23 +98,24 @@ pub async fn get_user(
     Extension(authenticated_user): Extension<User>,
     Path(id): Path<Uuid>,
 ) -> Response<UserResponse> {
-    // Check if user has permission to access this user
-    if !can_access_user(&authenticated_user, id) {
+    // Clone user service
+    let user_service = state.user_service.clone();
+
+    // Get user by id
+    let user = match user_service.get_user_by_id(id).await {
+        Ok(user) => user,
+        Err(e) => return Response::failure_not_found("User not found", Some(e.to_string())),
+    };
+
+    // Check if user has permission to access this user using trait-based authorization
+    if !can_access_resource(&authenticated_user, &user) {
         return Response::failure_forbidden(
             "Access denied",
             Some("You can only access your own user information".to_string()),
         );
     }
 
-    // Clone user service
-    let user_service = state.user_service.clone();
-
-    // Get user by id
-    user_service
-        .get_user_by_id(id)
-        .await
-        .map(|user| user.into())
-        .to_response("User retrieved successfully")
+    Response::success_ok(user.into(), "User retrieved successfully")
 }
 
 // Get all users handler
@@ -141,8 +138,17 @@ pub async fn update_user(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUserRequest>,
 ) -> Response<UserResponse> {
-    // Check if user has permission to update this user
-    if !can_access_user(&authenticated_user, id) {
+    // Clone user service
+    let user_service = state.user_service.clone();
+
+    // Get user by id first
+    let user = match user_service.get_user_by_id(id).await {
+        Ok(user) => user,
+        Err(e) => return Response::failure_not_found("User not found", Some(e.to_string())),
+    };
+
+    // Check if user has permission to update this user using trait-based authorization
+    if !can_access_resource(&authenticated_user, &user) {
         return Response::failure_forbidden(
             "Access denied",
             Some("You can only update your own user information".to_string()),
@@ -161,9 +167,6 @@ pub async fn update_user(
     } else {
         (req.role, req.status)
     };
-
-    // Clone user service
-    let user_service = state.user_service.clone();
 
     // Update user input
     let update_input = UpdateUserInput {
@@ -189,16 +192,22 @@ pub async fn delete_user(
     Extension(authenticated_user): Extension<User>,
     Path(id): Path<Uuid>,
 ) -> Response<serde_json::Value> {
-    // Check if user has permission to delete this user
-    if !can_access_user(&authenticated_user, id) {
+    // Clone user service
+    let user_service = state.user_service.clone();
+
+    // Get user by id first
+    let user = match user_service.get_user_by_id(id).await {
+        Ok(user) => user,
+        Err(e) => return Response::failure_not_found("User not found", Some(e.to_string())),
+    };
+
+    // Check if user has permission to delete this user using trait-based authorization
+    if !can_access_resource(&authenticated_user, &user) {
         return Response::failure_forbidden(
             "Access denied",
             Some("You can only delete your own user account".to_string()),
         );
     }
-
-    // Clone user service
-    let user_service = state.user_service.clone();
 
     // Delete user
     user_service

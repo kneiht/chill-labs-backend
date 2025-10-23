@@ -3,7 +3,7 @@ pub mod model;
 pub mod repository;
 pub mod service;
 
-use crate::middleware::{require_admin, require_teacher_or_admin};
+use crate::middleware::require_admin;
 use crate::state::AppState;
 use axum::middleware;
 use axum::routing::{get, post, put};

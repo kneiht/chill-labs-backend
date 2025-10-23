@@ -26,25 +26,32 @@ pub struct AppState {
 }
 
 impl AppState {
+    /// Initialize the application state.
     pub async fn new(settings: &Settings) -> anyhow::Result<Self> {
+        // Initialize database connection pool
         let pool = init_db(settings).await?;
 
         // Initialize repositories and services
         let user_repository = UserRepository::new(pool.clone());
         let user_service = UserService::new(user_repository.clone());
 
+        // Initialize note service with note repository
         let note_repository = NoteRepository::new(pool.clone());
         let note_service = NoteService::new(note_repository);
 
-        // Initialize auth service with JWT configuration
+        // Initialize JWT secret
         let jwt_secret = settings
             .jwt
             .secret
             .clone()
             .unwrap_or_else(|| "default_secret_change_in_production".to_string());
+
+        // Initialize JWT expiration hours
         let access_token_expiration_hours = settings.jwt.access_token_expiration_hours.unwrap_or(1);
         let refresh_token_expiration_hours =
             settings.jwt.refresh_token_expiration_hours.unwrap_or(720);
+
+        // Initialize auth service
         let auth_service = AuthService::new(
             user_repository,
             &jwt_secret,
@@ -52,6 +59,7 @@ impl AppState {
             refresh_token_expiration_hours,
         );
 
+        // Initialize state
         Ok(Self {
             settings: settings.clone(),
             user_service,
@@ -61,7 +69,7 @@ impl AppState {
     }
 }
 
-// Function to initialize the PostgreSQL database connection pool
+/// Initialize the PostgreSQL database connection pool
 async fn init_db(settings: &Settings) -> anyhow::Result<PgPool> {
     let url = settings
         .database
@@ -78,14 +86,14 @@ async fn init_db(settings: &Settings) -> anyhow::Result<PgPool> {
     Ok(pool)
 }
 
-// Function to seed the admin user if it doesn't exist
+/// Seed the admin user if it doesn't exist
 async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
     let user_repository = UserRepository::new(pool.clone());
     let user_service = UserService::new(user_repository);
 
     // Check if admin user already exists
     if user_service
-        .get_user_by_email("admin@example.com")
+        .get_user_by_email("minhthien.k@gmail.com")
         .await
         .is_ok()
     {
@@ -94,13 +102,13 @@ async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
     }
 
     // Hash the password
-    let password_hash = hash_password("admin")?;
+    let password_hash = hash_password("123123123")?;
 
     // Create admin user
     let create_input = crate::domain::user::service::CreateUserInput {
-        display_name: Some("Admin".to_string()),
-        username: Some("admin".to_string()),
-        email: Some("admin@example.com".to_string()),
+        display_name: Some("Minh Thien".to_string()),
+        username: Some("minhthienk".to_string()),
+        email: Some("minhthien.k@gmail.com".to_string()),
         password_hash,
         role: Role::Admin,
     };

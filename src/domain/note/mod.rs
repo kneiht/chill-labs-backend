@@ -8,9 +8,9 @@ use axum::routing::{get, post};
 use axum::Router;
 
 pub fn note_routes() -> Router<AppState> {
-    use self::handler::{create, delete, get as get_handler, get_all, update};
+    use self::handler::{create_note, delete_note, get_all_notes, get_note, update_note};
 
     Router::new()
-        .route("/", post(create).get(get_all))
-        .route("/{id}", get(get_handler).put(update).delete(delete))
+        .route("/", post(create_note).get(get_all_notes))
+        .route("/{id}", get(get_note).put(update_note).delete(delete_note))
 }

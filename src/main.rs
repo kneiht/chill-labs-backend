@@ -1,3 +1,4 @@
+mod authorization;
 mod domain;
 mod middleware;
 mod server;

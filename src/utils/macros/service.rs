@@ -70,10 +70,6 @@ macro_rules! crud_service {
                     })
             }
 
-            pub async fn get_all(&self) -> Result<Vec<$model>, crate::domain::error::AppError> {
-                self.repository.find_all().await
-            }
-
             pub async fn update<T: crate::domain::Transformer<$update_input>>(
                 &self,
                 to_update: T,
