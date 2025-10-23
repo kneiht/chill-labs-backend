@@ -1,5 +1,5 @@
 use axum::extract::{Path, State};
-use axum::Json;
+use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -10,6 +10,11 @@ use crate::domain::response::Response;
 use crate::state::AppState;
 
 use crate::utils::password::hash_password;
+
+/// Helper function to check if user has permission to access a resource
+fn can_access_user(authenticated_user: &User, target_user_id: Uuid) -> bool {
+    authenticated_user.role == Role::Admin || authenticated_user.id == target_user_id
+}
 
 #[derive(Debug, Deserialize)]
 pub struct CreateUserRequest {
@@ -94,8 +99,17 @@ pub async fn create_user(
 // Get user handler
 pub async fn get_user(
     State(state): State<AppState>,
+    Extension(authenticated_user): Extension<User>,
     Path(id): Path<Uuid>,
 ) -> Response<UserResponse> {
+    // Check if user has permission to access this user
+    if !can_access_user(&authenticated_user, id) {
+        return Response::failure_forbidden(
+            "Access denied",
+            Some("You can only access your own user information".to_string()),
+        );
+    }
+
     // Clone user service
     let user_service = state.user_service.clone();
 
@@ -123,9 +137,31 @@ pub async fn get_all_users(State(state): State<AppState>) -> Response<Vec<UserRe
 // Update user handler
 pub async fn update_user(
     State(state): State<AppState>,
+    Extension(authenticated_user): Extension<User>,
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateUserRequest>,
 ) -> Response<UserResponse> {
+    // Check if user has permission to update this user
+    if !can_access_user(&authenticated_user, id) {
+        return Response::failure_forbidden(
+            "Access denied",
+            Some("You can only update your own user information".to_string()),
+        );
+    }
+
+    // Non-admin users cannot change role and status
+    let (role, status) = if authenticated_user.role != Role::Admin {
+        if req.role.is_some() || req.status.is_some() {
+            return Response::failure_forbidden(
+                "Access denied",
+                Some("Only administrators can change user role or status".to_string()),
+            );
+        }
+        (None, None)
+    } else {
+        (req.role, req.status)
+    };
+
     // Clone user service
     let user_service = state.user_service.clone();
 
@@ -135,8 +171,8 @@ pub async fn update_user(
         display_name: req.display_name,
         username: req.username,
         email: req.email,
-        role: req.role,
-        status: req.status,
+        role,
+        status,
     };
 
     // Update user
@@ -150,8 +186,17 @@ pub async fn update_user(
 // Delete user handler
 pub async fn delete_user(
     State(state): State<AppState>,
+    Extension(authenticated_user): Extension<User>,
     Path(id): Path<Uuid>,
 ) -> Response<serde_json::Value> {
+    // Check if user has permission to delete this user
+    if !can_access_user(&authenticated_user, id) {
+        return Response::failure_forbidden(
+            "Access denied",
+            Some("You can only delete your own user account".to_string()),
+        );
+    }
+
     // Clone user service
     let user_service = state.user_service.clone();
 
