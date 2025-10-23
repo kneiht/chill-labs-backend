@@ -24,11 +24,16 @@ impl AuthService {
     pub fn new(
         user_repository: UserRepository,
         jwt_secret: &str,
-        jwt_expiration_hours: i64,
+        access_token_expiration_hours: i64,
+        refresh_token_expiration_hours: i64,
     ) -> Self {
         Self {
             user_service: UserService::new(user_repository),
-            jwt_util: JwtUtil::new(jwt_secret, jwt_expiration_hours),
+            jwt_util: JwtUtil::new(
+                jwt_secret,
+                access_token_expiration_hours,
+                refresh_token_expiration_hours,
+            ),
         }
     }
 
@@ -63,16 +68,23 @@ impl AuthService {
         // Create user through user service
         let user = self.user_service.create_user(create_input).await?;
 
-        // Generate JWT token
+        // Generate access and refresh tokens
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        let token = self
+        
+        let access_token = self
             .jwt_util
-            .generate_token(user.id, email)
-            .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
+            .generate_access_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
+        
+        let refresh_token = self
+            .jwt_util
+            .generate_refresh_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Refresh token generation failed: {}", e)))?;
 
         Ok(AuthResponse {
-            token,
+            access_token,
+            refresh_token,
             user: user.into(),
         })
     }
@@ -115,21 +127,28 @@ impl AuthService {
             ));
         }
 
-        // Generate JWT token
+        // Generate access and refresh tokens
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        let token = self
+        
+        let access_token = self
             .jwt_util
-            .generate_token(user.id, email)
-            .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
+            .generate_access_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
+        
+        let refresh_token = self
+            .jwt_util
+            .generate_refresh_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Refresh token generation failed: {}", e)))?;
 
         Ok(AuthResponse {
-            token,
+            access_token,
+            refresh_token,
             user: user.into(),
         })
     }
 
-    /// Refresh an existing JWT token
+    /// Refresh an existing JWT token - accepts refresh token, returns new access token
     pub async fn refresh_token<T: Transformer<RefreshTokenRequest>>(
         &self,
         to_refresh_request: T,
@@ -137,11 +156,18 @@ impl AuthService {
         // Validate and transform input
         let refresh_req = to_refresh_request.transform()?;
 
-        // Verify the existing token
+        // Verify the token (will fail if expired)
         let claims = self
             .jwt_util
             .verify_token(&refresh_req.token)
-            .map_err(|e| AppError::Unauthorized(format!("Invalid token: {}", e)))?;
+            .map_err(|e| AppError::Unauthorized(format!("Invalid or expired token: {}", e)))?;
+
+        // Ensure it's a refresh token, not an access token
+        if claims.token_type != crate::utils::jwt::TokenType::Refresh {
+            return Err(AppError::Unauthorized(
+                "Invalid token type: expected refresh token".to_string(),
+            ));
+        }
 
         // Parse user ID from claims
         let user_id = claims
@@ -160,24 +186,31 @@ impl AuthService {
             ));
         }
 
-        // Generate new token
+        // Generate new access token only
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        let new_token = self
+        let new_access_token = self
             .jwt_util
-            .generate_token(user.id, email)
-            .map_err(|e| AppError::Internal(format!("Token generation failed: {}", e)))?;
+            .generate_access_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
 
-        Ok(new_token)
+        Ok(new_access_token)
     }
 
-    /// Verify token and return user information
+    /// Verify access token and return user information
     pub async fn verify_and_get_user(&self, token: &str) -> Result<User, AppError> {
         // Verify token
         let claims = self
             .jwt_util
             .verify_token(token)
-            .map_err(|e| AppError::Unauthorized(format!("Invalid token: {}", e)))?;
+            .map_err(|e| AppError::Unauthorized(format!("Invalid or expired token: {}", e)))?;
+
+        // Ensure it's an access token, not a refresh token
+        if claims.token_type != crate::utils::jwt::TokenType::Access {
+            return Err(AppError::Unauthorized(
+                "Invalid token type: expected access token".to_string(),
+            ));
+        }
 
         // Parse user ID from claims
         let user_id = claims

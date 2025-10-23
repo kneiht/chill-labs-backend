@@ -44,7 +44,8 @@ pub struct RefreshTokenRequest {
 /// Response for authentication operations (login, register)
 #[derive(Debug, Serialize)]
 pub struct AuthResponse {
-    pub token: String,
+    pub access_token: String,
+    pub refresh_token: String,
     pub user: UserInfo,
 }
 
@@ -75,5 +76,5 @@ impl From<User> for UserInfo {
 /// Token refresh response
 #[derive(Debug, Serialize)]
 pub struct RefreshTokenResponse {
-    pub token: String,
+    pub access_token: String,
 }

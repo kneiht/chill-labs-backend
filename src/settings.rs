@@ -47,7 +47,8 @@ pub struct Server {
 #[allow(unused)]
 pub struct Jwt {
     pub secret: Option<String>,
-    pub expiration_hours: Option<i64>,
+    pub access_token_expiration_hours: Option<i64>,
+    pub refresh_token_expiration_hours: Option<i64>,
 }
 
 // Define the Settings struct to hold all the configuration settings

@@ -46,7 +46,7 @@ pub async fn refresh_token(
         .auth_service
         .refresh_token(req)
         .await
-        .map(|token| RefreshTokenResponse { token })
+        .map(|access_token| RefreshTokenResponse { access_token })
         .to_response("Token refreshed successfully")
 }
 
