@@ -1,12 +1,12 @@
 use anyhow::Context;
-use axum::http::{Method, StatusCode, Uri};
+use axum::body::Body;
+use axum::http::{header, Method, Response, StatusCode, Uri};
 use axum::middleware;
 use axum::response::{IntoResponse, Json};
-use axum::routing::get_service;
-use axum::Router;
+use axum::routing::get;
+use axum::{extract::Path, Router};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
-use tower_http::services::ServeFile;
 
 use crate::domain::auth::auth_routes;
 use crate::domain::healthcheck::healthcheck_routes;
@@ -16,12 +16,35 @@ use crate::middleware::auth_middleware;
 
 use serde_json::json;
 
+use rust_embed::RustEmbed;
+
 use crate::state::AppState;
+
+#[derive(RustEmbed)]
+#[folder = "static/"]
+struct Assets;
+
+/// Handler to serve static assets embedded in the binary.
+async fn static_handler(Path(path): Path<String>) -> impl IntoResponse {
+    match Assets::get(path.as_str()) {
+        Some(content) => {
+            let mime = mime_guess::from_path(path).first_or_octet_stream();
+            Response::builder()
+                .header(header::CONTENT_TYPE, mime.as_ref())
+                .body(Body::from(content.data))
+                .unwrap()
+        }
+        None => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("404 Not Found"))
+            .unwrap(),
+    }
+}
 
 /// Fallback handler for 404 Not Found errors.
 async fn fallback(uri: Uri) -> impl IntoResponse {
     let message = format!("Route '{}' not found", uri.path());
-    let body = Json(json!({ "success": false, "message": message }));
+    let body = Json(json!({ "success": false, "message": message, "data": null }));
 
     (StatusCode::NOT_FOUND, body)
 }
@@ -53,7 +76,19 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     let app = Router::new()
         .nest("/api/healthcheck", healthcheck_routes())
         .nest("/api/auth", auth_routes())
-        .route("/admin", get_service(ServeFile::new("static/admin.html")))
+        // Serve static files from the embedded assets
+        .route(
+            "/api/admin",
+            get(|| async { static_handler(Path("admin.html".to_string())).await }),
+        )
+        .route(
+            "/api/note-app",
+            get(|| async { static_handler(Path("notes.html".to_string())).await }),
+        )
+        .route(
+            "/api/tester",
+            get(|| async { static_handler(Path("api.html".to_string())).await }),
+        )
         .merge(protected_routes)
         .fallback(fallback)
         .with_state(state.clone())
