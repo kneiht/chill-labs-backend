@@ -1,13 +1,15 @@
 use anyhow::Context;
 use axum::http::Method;
-use axum::{routing::get, Router};
+use axum::middleware;
+use axum::Router;
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::domain::auth::auth_routes;
-use crate::domain::healthcheck::handler::healthcheck;
+use crate::domain::healthcheck::healthcheck_routes;
 use crate::domain::note::note_routes;
 use crate::domain::user::user_routes;
+use crate::middleware::auth_middleware;
 
 use crate::state::AppState;
 
@@ -24,12 +26,20 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         ])
         .allow_headers(Any);
 
-    // Routes
-    let app = Router::new()
-        .route("/api/healthcheck", get(healthcheck))
-        .nest("/api/auth", auth_routes())
+    // Protected routes (require authentication)
+    let protected_routes = Router::new()
         .nest("/api/users", user_routes())
         .nest("/api/notes", note_routes())
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth_middleware,
+        ));
+
+    // Public routes
+    let app = Router::new()
+        .nest("/api/healthcheck", healthcheck_routes())
+        .nest("/api/auth", auth_routes())
+        .merge(protected_routes)
         .with_state(state.clone())
         .layer(cors);
 

@@ -12,10 +12,10 @@ pub enum TokenType {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: String,        // Subject (user ID)
-    pub exp: usize,         // Expiration time (as UTC timestamp)
-    pub iat: usize,         // Issued at (as UTC timestamp)
-    pub email: String,      // User email
+    pub sub: String,           // Subject (user ID)
+    pub exp: usize,            // Expiration time (as UTC timestamp)
+    pub iat: usize,            // Issued at (as UTC timestamp)
+    pub email: String,         // User email
     pub token_type: TokenType, // Token type (access or refresh)
 }
 

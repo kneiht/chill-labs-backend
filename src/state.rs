@@ -43,7 +43,8 @@ impl AppState {
             .clone()
             .unwrap_or_else(|| "default_secret_change_in_production".to_string());
         let access_token_expiration_hours = settings.jwt.access_token_expiration_hours.unwrap_or(1);
-        let refresh_token_expiration_hours = settings.jwt.refresh_token_expiration_hours.unwrap_or(720);
+        let refresh_token_expiration_hours =
+            settings.jwt.refresh_token_expiration_hours.unwrap_or(720);
         let auth_service = AuthService::new(
             user_repository,
             &jwt_secret,

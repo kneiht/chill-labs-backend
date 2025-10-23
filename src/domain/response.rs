@@ -1,6 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 // ErrorType enum
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -86,7 +86,7 @@ macro_rules! crud_handlers {
             use crate::domain::error::ToResponse;
             let service = state.$service_field.clone();
             let input = $create_mapping;
-            
+
             service
                 .create(input)
                 .await
@@ -100,7 +100,7 @@ macro_rules! crud_handlers {
         ) -> crate::domain::response::Response<$response> {
             use crate::domain::error::ToResponse;
             let service = state.$service_field.clone();
-            
+
             service
                 .get_by_id(id)
                 .await
@@ -113,7 +113,7 @@ macro_rules! crud_handlers {
         ) -> crate::domain::response::Response<Vec<$response>> {
             use crate::domain::error::ToResponse;
             let service = state.$service_field.clone();
-            
+
             service
                 .get_all()
                 .await
@@ -129,7 +129,7 @@ macro_rules! crud_handlers {
             use crate::domain::error::ToResponse;
             let service = state.$service_field.clone();
             let input = $update_mapping;
-            
+
             service
                 .update(input)
                 .await
@@ -143,7 +143,7 @@ macro_rules! crud_handlers {
         ) -> crate::domain::response::Response<serde_json::Value> {
             use crate::domain::error::ToResponse;
             let service = state.$service_field.clone();
-            
+
             service
                 .delete(id)
                 .await

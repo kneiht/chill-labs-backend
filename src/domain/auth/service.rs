@@ -71,12 +71,12 @@ impl AuthService {
         // Generate access and refresh tokens
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        
+
         let access_token = self
             .jwt_util
             .generate_access_token(user.id, email)
             .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
-        
+
         let refresh_token = self
             .jwt_util
             .generate_refresh_token(user.id, email)
@@ -130,12 +130,12 @@ impl AuthService {
         // Generate access and refresh tokens
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        
+
         let access_token = self
             .jwt_util
             .generate_access_token(user.id, email)
             .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
-        
+
         let refresh_token = self
             .jwt_util
             .generate_refresh_token(user.id, email)
@@ -157,7 +157,7 @@ impl AuthService {
         let refresh_req = to_refresh_request.transform()?;
 
         // Verify the token (will fail if expired)
-        let claims = self
+        let claims: Claims = self
             .jwt_util
             .verify_token(&refresh_req.token)
             .map_err(|e| AppError::Unauthorized(format!("Invalid or expired token: {}", e)))?;
@@ -200,7 +200,7 @@ impl AuthService {
     /// Verify access token and return user information
     pub async fn verify_and_get_user(&self, token: &str) -> Result<User, AppError> {
         // Verify token
-        let claims = self
+        let claims: Claims = self
             .jwt_util
             .verify_token(token)
             .map_err(|e| AppError::Unauthorized(format!("Invalid or expired token: {}", e)))?;
@@ -231,12 +231,5 @@ impl AuthService {
         }
 
         Ok(user)
-    }
-
-    /// Verify token and return claims
-    pub fn verify_token(&self, token: &str) -> Result<Claims, AppError> {
-        self.jwt_util
-            .verify_token(token)
-            .map_err(|e| AppError::Unauthorized(format!("Invalid token: {}", e)))
     }
 }

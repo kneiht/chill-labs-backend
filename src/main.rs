@@ -1,4 +1,5 @@
 mod domain;
+mod middleware;
 mod server;
 mod settings;
 mod state;
