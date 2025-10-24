@@ -136,7 +136,7 @@ if [[ "$BUILD_IMAGE" =~ ^[Yy]$ ]]; then
     fi
     echo -e "${GREEN}✓ Docker image saved successfully!${NC}"
 
-    $SCP_CMD english-coaching-image.tar.gz $USERNAME@$SERVER_IP:$REMOTE_DIR/
+    $SCP_CMD chill-labs-backend-image.tar.gz $USERNAME@$SERVER_IP:$REMOTE_DIR/
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error copying Docker image file to server!${NC}"
         exit 1
@@ -183,7 +183,7 @@ $SSH_CMD "cd $REMOTE_DIR && docker logs caddy 2>&1 | tail -n 20"
 # Cleanup
 echo
 echo -e "${BLUE}Cleanup...${NC}"
-# rm -rf ./scripts/english-coaching-image.tar.gz
+# rm -rf ./scripts/chill-labs-backend-image.tar.gz
 # rm -rf ./scripts/static-files.tar.gz
 docker image prune -f
 

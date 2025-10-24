@@ -21,8 +21,7 @@ dist
 target
 
 # Images
-scripts/english-coaching-image.tar.gz
-scripts/static-files.tar.gz
+scripts/*-image.tar.gz
 
 
 # Private files and folders

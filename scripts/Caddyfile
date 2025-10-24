@@ -4,7 +4,7 @@ coaching.chillteacher.com {
 
     # Cấu hình cho API endpoints
     handle /api/* {
-        reverse_proxy english-coaching:3000 {
+        reverse_proxy chill-labs-backend:3000 {
             header_up Host {host}
             header_up X-Real-IP {remote}
             header_up X-Forwarded-For {remote}
