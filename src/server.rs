@@ -65,8 +65,8 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
 
     // Protected routes (require authentication)
     let protected_routes = Router::new()
-        .nest("/api/users", user_routes())
-        .nest("/api/notes", note_routes())
+        .nest("/users", user_routes())
+        .nest("/notes", note_routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -74,19 +74,19 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
 
     // Public routes
     let app = Router::new()
-        .nest("/api/healthcheck", healthcheck_routes())
-        .nest("/api/auth", auth_routes())
+        .nest("/healthcheck", healthcheck_routes())
+        .nest("/auth", auth_routes())
         // Serve static files from the embedded assets
         .route(
-            "/api/admin",
+            "/admin",
             get(|| async { static_handler(Path("admin.html".to_string())).await }),
         )
         .route(
-            "/api/note-app",
+            "/note-app",
             get(|| async { static_handler(Path("notes.html".to_string())).await }),
         )
         .route(
-            "/api/tester",
+            "/tester",
             get(|| async { static_handler(Path("api.html".to_string())).await }),
         )
         .merge(protected_routes)

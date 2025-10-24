@@ -473,7 +473,7 @@
         const username = $('login-username').value;
         const password = $('login-password').value;
 
-        const data = await apiCall('/api/auth/login', {
+        const data = await apiCall('/auth/login', {
           method: 'POST',
           body: JSON.stringify({
             login: username,
@@ -504,7 +504,7 @@
 
     async function loadCurrentUser() {
       try {
-        const data = await apiCall('/api/auth/me');
+        const data = await apiCall('/auth/me');
         currentUser = data.data;
         updateUserInfoHeader();
       } catch (error) {
@@ -530,7 +530,7 @@
     // Users management
     async function loadUsers() {
       try {
-        const data = await apiCall('/api/users');
+        const data = await apiCall('/users');
         const users = data.data;
         const tbody = $('users-table-body');
         const empty = $('users-empty');
@@ -597,7 +597,7 @@
         if (email) body.email = email;
         if (username) body.username = username;
 
-        await apiCall('/api/users', {
+        await apiCall('/users', {
           method: 'POST',
           body: JSON.stringify(body),
         });
@@ -620,7 +620,7 @@
 
     async function editUser(userId) {
       try {
-        const data = await apiCall(`/api/users/${userId}`);
+        const data = await apiCall(`/users/${userId}`);
         const user = data.data;
 
         $('edit-user-id').value = user.id;
@@ -655,7 +655,7 @@
         if (username) body.username = username;
         if (role) body.role = role;
 
-        await apiCall(`/api/users/${userId}`, {
+        await apiCall(`/users/${userId}`, {
           method: 'PUT',
           body: JSON.stringify(body),
         });
@@ -674,7 +674,7 @@
       }
 
       try {
-        await apiCall(`/api/users/${userId}`, {
+        await apiCall(`/users/${userId}`, {
           method: 'DELETE',
         });
         await loadUsers();
@@ -702,7 +702,7 @@
           content: $('create-note-content').value.trim(),
         };
 
-        await apiCall('/api/notes', {
+        await apiCall('/notes', {
           method: 'POST',
           body: JSON.stringify(body),
         });
@@ -718,7 +718,7 @@
     // Notes management
     async function loadNotes() {
       try {
-        const data = await apiCall('/api/notes');
+        const data = await apiCall('/notes');
         const notes = data.data;
         const tbody = $('notes-table-body');
         const empty = $('notes-empty');
@@ -758,7 +758,7 @@
 
     async function editNote(noteId) {
       try {
-        const data = await apiCall(`/api/notes/${noteId}`);
+        const data = await apiCall(`/notes/${noteId}`);
         const note = data.data;
 
         $('edit-note-id').value = note.id;
@@ -784,7 +784,7 @@
           content: $('edit-note-content').value,
         };
 
-        await apiCall(`/api/notes/${noteId}`, {
+        await apiCall(`/notes/${noteId}`, {
           method: 'PUT',
           body: JSON.stringify(body),
         });
@@ -803,7 +803,7 @@
       }
 
       try {
-        await apiCall(`/api/notes/${noteId}`, {
+        await apiCall(`/notes/${noteId}`, {
           method: 'DELETE',
         });
         await loadNotes();

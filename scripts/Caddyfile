@@ -1,9 +1,9 @@
-coaching.chillteacher.com {
+api.chillteacher.com {
     # Tự động HTTPS
     # tls {}
 
     # Cấu hình cho API endpoints
-    handle /api/* {
+    handle * {
         reverse_proxy chill-labs-backend:3000 {
             header_up Host {host}
             header_up X-Real-IP {remote}
@@ -11,65 +11,6 @@ coaching.chillteacher.com {
             header_up X-Forwarded-Proto {scheme}
         }
     }
-
-    # Cấu hình cho file CSS
-    @css {
-        path_regexp \.css$
-    }
-    handle @css {
-        root * /srv
-        file_server
-        header Content-Type text/css
-        header Cache-Control "public, max-age=604800"
-    }
-
-
-
-    # Cấu hình cho file JS
-    @js {
-        path_regexp \.js$
-    }
-    handle @js {
-        root * /srv
-        file_server
-        header Content-Type application/javascript
-        header Cache-Control "public, max-age=604800"
-    }
-
-    # Cấu hình cho các file media
-    @media {
-        path_regexp \.(jpg|jpeg|png|gif|ico|svg|webp)$
-    }
-    handle @media {
-        root * /srv
-        file_server
-        header Cache-Control "public, max-age=604800"
-    }
-
-    # Cấu hình cho các file font
-    @fonts {
-        path_regexp \.(woff|woff2|ttf|otf|eot)$
-    }
-    handle @fonts {
-        root * /srv
-        file_server
-        header Cache-Control "public, max-age=604800"
-    }
-
-# Phục vụ static site từ thư mục /srv
-handle {
-    root * /srv
-    file_server {
-        precompressed
-    }
-    try_files {path} /index.html
-
-    # Đặt Content-Type cho file HTML
-    @html {
-        path_regexp \.html$
-    }
-    header @html Content-Type "text/html; charset=utf-8"
-}
 
     # Nén dữ liệu
     encode gzip zstd
