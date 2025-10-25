@@ -3,8 +3,7 @@ use axum::http::header::AUTHORIZATION;
 use axum::Json;
 
 use super::model::{
-    AuthResponse, LoginRequest, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest,
-    UserInfo,
+    AuthResponse, LoginRequest, RefreshTokenRequest, RegisterRequest, UserInfo,
 };
 use crate::domain::error::ToResponse;
 use crate::domain::response::Response;
@@ -38,15 +37,15 @@ pub async fn login(
 
 /// Handler for token refresh
 /// POST /api/auth/refresh
+/// Returns new access token AND new refresh token (rotating refresh token strategy)
 pub async fn refresh_token(
     State(state): State<AppState>,
     Json(req): Json<RefreshTokenRequest>,
-) -> Response<RefreshTokenResponse> {
+) -> Response<AuthResponse> {
     state
         .auth_service
         .refresh_token(req)
         .await
-        .map(|access_token| RefreshTokenResponse { access_token })
         .to_response("Token refreshed successfully")
 }
 

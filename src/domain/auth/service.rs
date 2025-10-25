@@ -148,11 +148,13 @@ impl AuthService {
         })
     }
 
-    /// Refresh an existing JWT token - accepts refresh token, returns new access token
+    /// Refresh an existing JWT token - accepts refresh token, returns new access and refresh tokens
+    /// Uses rotating refresh tokens strategy: each refresh returns a new refresh token,
+    /// effectively extending the session indefinitely as long as the user remains active
     pub async fn refresh_token<T: Transformer<RefreshTokenRequest>>(
         &self,
         to_refresh_request: T,
-    ) -> Result<String, AppError> {
+    ) -> Result<AuthResponse, AppError> {
         // Validate and transform input
         let refresh_req = to_refresh_request.transform()?;
 
@@ -186,15 +188,25 @@ impl AuthService {
             ));
         }
 
-        // Generate new access token only
+        // Generate new access AND refresh tokens (rotating refresh token strategy)
         let empty_email = String::new();
         let email = user.email.as_ref().unwrap_or(&empty_email);
-        let new_access_token = self
+        
+        let access_token = self
             .jwt_util
             .generate_access_token(user.id, email)
             .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
 
-        Ok(new_access_token)
+        let refresh_token = self
+            .jwt_util
+            .generate_refresh_token(user.id, email)
+            .map_err(|e| AppError::Internal(format!("Refresh token generation failed: {}", e)))?;
+
+        Ok(AuthResponse {
+            access_token,
+            refresh_token,
+            user: user.into(),
+        })
     }
 
     /// Verify access token and return user information
