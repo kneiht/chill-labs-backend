@@ -4,6 +4,7 @@ pub mod healthcheck;
 pub mod note;
 pub mod response;
 pub mod user;
+pub mod vocab;
 
 use crate::domain::error::AppError;
 use validator::Validate as DeriveValidate;

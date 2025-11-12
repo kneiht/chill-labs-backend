@@ -12,6 +12,7 @@ use crate::domain::auth::auth_routes;
 use crate::domain::healthcheck::healthcheck_routes;
 use crate::domain::note::note_routes;
 use crate::domain::user::user_routes;
+use crate::domain::vocab::vocab_routes;
 use crate::middleware::auth_middleware;
 
 use serde_json::json;
@@ -67,6 +68,7 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     let protected_routes = Router::new()
         .nest("/users", user_routes())
         .nest("/notes", note_routes())
+        .nest("/vocabs", vocab_routes())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -88,6 +90,10 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         .route(
             "/tester",
             get(|| async { static_handler(Path("api.html".to_string())).await }),
+        )
+        .route(
+            "/vocab-app",
+            get(|| async { static_handler(Path("vocabs.html".to_string())).await }),
         )
         .merge(protected_routes)
         .fallback(fallback)

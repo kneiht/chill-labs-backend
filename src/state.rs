@@ -11,6 +11,10 @@ use crate::domain::user::service::UserService;
 use crate::domain::note::repository::NoteRepository;
 use crate::domain::note::service::NoteService;
 
+// Vocab domain
+use crate::domain::vocab::repository::VocabRepository;
+use crate::domain::vocab::service::VocabService;
+
 // Auth domain
 use crate::domain::auth::service::AuthService;
 
@@ -22,6 +26,7 @@ pub struct AppState {
     pub settings: Settings,
     pub user_service: UserService,
     pub note_service: NoteService,
+    pub vocab_service: VocabService,
     pub auth_service: AuthService,
 }
 
@@ -38,6 +43,10 @@ impl AppState {
         // Initialize note service with note repository
         let note_repository = NoteRepository::new(pool.clone());
         let note_service = NoteService::new(note_repository);
+
+        // Initialize vocab service with vocab repository
+        let vocab_repository = VocabRepository::new(pool.clone());
+        let vocab_service = VocabService::new(vocab_repository);
 
         // Initialize JWT secret
         let jwt_secret = settings
@@ -64,6 +73,7 @@ impl AppState {
             settings: settings.clone(),
             user_service,
             note_service,
+            vocab_service,
             auth_service,
         })
     }
