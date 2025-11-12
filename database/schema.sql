@@ -20,8 +20,6 @@ CREATE TABLE users (
     created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-
 -- Indexes for performance:
 -- - idx_users_email: Speeds up email-based queries.
 -- - idx_users_username: Speeds up username-based queries.
@@ -29,6 +27,9 @@ CREATE TABLE users (
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_username ON users(username);
 CREATE INDEX idx_users_created ON users(created);
+
+
+
 
 -- Notes table: Stores notes for users in the coaching application.
 -- Fields:
@@ -46,9 +47,24 @@ CREATE TABLE notes (
     created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
 -- Indexes for notes table:
 -- - idx_notes_user_id: Speeds up queries by user.
 -- - idx_notes_created: Speeds up ordering by creation date.
 CREATE INDEX idx_notes_user_id ON notes(user_id);
 CREATE INDEX idx_notes_created ON notes(created);
+
+
+
+
+-- Create vocabs table
+CREATE TABLE IF NOT EXISTS vocabs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    words JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_vocabs_user_id ON vocabs(user_id);
+CREATE INDEX IF NOT EXISTS idx_vocabs_created ON vocabs(created DESC);
+CREATE INDEX IF NOT EXISTS idx_vocabs_updated ON vocabs(updated DESC);
