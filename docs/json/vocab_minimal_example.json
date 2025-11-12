@@ -1,0 +1,23 @@
+{
+    "id": "<UUID>",
+    "words": [
+      {
+        "word": "implication",
+        "vietnameseMeaning": "hàm ý, ngụ ý, ẩn ý"
+      },
+      {
+        "word": "intelligence",
+        "phonics": "/ɪnˈtɛlədʒəns/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "trí thông minh",
+        "sampleSentence": "Emotional intelligence is as important as IQ.",
+        "vietnameseTranslation": "Trí tuệ cảm xúc cũng quan trọng như IQ.",
+        "wordPronunciation": "intelligence.mp3",
+        "sentencePronunciation": "emotional-intelligence-is-as-important-as-iq.mp3"
+      },
+      {
+        "word": "minimal",
+        "vietnameseMeaning": "tối thiểu"
+      }
+    ]
+}

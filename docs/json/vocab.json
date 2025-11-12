@@ -1,0 +1,116 @@
+{
+    "id": "<UUID>",
+    "words": [
+      {
+        "word": "implication",
+        "phonics": "/ɪmplɪˈkeɪʃən/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "hàm ý, ngụ ý, ẩn ý",
+        "sampleSentence": "The teacher explained the implications of the new rule.",
+        "vietnameseTranslation": "Giáo viên giải thích những hàm ý của quy định mới.",
+        "image": "",
+        "wordPronunciation": "implication.mp3",
+        "sentencePronunciation": "the-teacher-explained-the-implications-of-the-new-rule.mp3"
+      },
+      {
+        "word": "intelligence",
+        "phonics": "/ɪnˈtɛlədʒəns/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "trí thông minh",
+        "sampleSentence": "Emotional intelligence is as important as IQ.",
+        "vietnameseTranslation": "Trí tuệ cảm xúc cũng quan trọng như IQ.",
+        "image": "",
+        "wordPronunciation": "intelligence.mp3",
+        "sentencePronunciation": "emotional-intelligence-is-as-important-as-iq.mp3"
+      },
+      {
+        "word": "theory",
+        "phonics": "/ˈθɪri/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "lý thuyết",
+        "sampleSentence": "The students studied the theory of evolution.",
+        "vietnameseTranslation": "Học sinh đã học về lý thuyết tiến hóa.",
+        "image": "",
+        "wordPronunciation": "theory.mp3",
+        "sentencePronunciation": "the-students-studied-the-theory-of-evolution.mp3"
+      },
+      {
+        "word": "Intelligence Quotient",
+        "phonics": "/ɪnˈtɛlədʒəns ˈkwoʊʃənt/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "chỉ số IQ",
+        "sampleSentence": "Her intelligence quotient is above average.",
+        "vietnameseTranslation": "Chỉ số IQ của cô ấy cao hơn mức trung bình.",
+        "image": "",
+        "wordPronunciation": "intelligence-quotient.mp3",
+        "sentencePronunciation": "her-intelligence-quotient-is-above-average.mp3"
+      },
+      {
+        "word": "popular",
+        "phonics": "/ˈpɑpjələr/",
+        "partOfSpeech": "adj",
+        "vietnameseMeaning": "phổ biến, được ưa chuộng",
+        "sampleSentence": "Football is very popular in Vietnam.",
+        "vietnameseTranslation": "Bóng đá rất phổ biến ở Việt Nam.",
+        "image": "",
+        "wordPronunciation": "popular.mp3",
+        "sentencePronunciation": "football-is-very-popular-in-vietnam.mp3"
+      },
+      {
+        "word": "language skills",
+        "phonics": "/ˈlæŋɡwɪdʒ skɪlz/",
+        "partOfSpeech": "phr",
+        "vietnameseMeaning": "kỹ năng ngôn ngữ",
+        "sampleSentence": "Reading books helps improve language skills.",
+        "vietnameseTranslation": "Đọc sách giúp cải thiện kỹ năng ngôn ngữ.",
+        "image": "",
+        "wordPronunciation": "language-skills.mp3",
+        "sentencePronunciation": "reading-books-helps-improve-language-skills.mp3"
+      },
+      {
+        "word": "logical-mathematical skills",
+        "phonics": "/ˈlɑdʒɪkəl ˌmæθəˈmætɪkəl skɪlz/",
+        "partOfSpeech": "phr",
+        "vietnameseMeaning": "kỹ năng logic - toán học",
+        "sampleSentence": "Solving puzzles develops logical-mathematical skills.",
+        "vietnameseTranslation": "Giải đố phát triển kỹ năng logic - toán học.",
+        "image": "",
+        "wordPronunciation": "logical-mathematical-skills.mp3",
+        "sentencePronunciation": "solving-puzzles-develops-logical-mathematical-skills.mp3"
+      },
+      {
+        "word": "narrow",
+        "phonics": "/ˈnæroʊ/",
+        "partOfSpeech": "adj",
+        "vietnameseMeaning": "hạn hẹp",
+        "sampleSentence": "That is a narrow definition of intelligence.",
+        "vietnameseTranslation": "Đó là một định nghĩa hạn hẹp về trí thông minh.",
+        "image": "",
+        "wordPronunciation": "narrow.mp3",
+        "sentencePronunciation": "that-is-a-narrow-definition-of-intelligence.mp3"
+      },
+      {
+        "word": "professor",
+        "phonics": "/prəˈfɛsər/",
+        "partOfSpeech": "n",
+        "vietnameseMeaning": "giáo sư",
+        "sampleSentence": "The professor gave a lecture on psychology.",
+        "vietnameseTranslation": "Giáo sư đã giảng bài về tâm lý học.",
+        "image": "",
+        "wordPronunciation": "professor.mp3",
+        "sentencePronunciation": "the-professor-gave-a-lecture-on-psychology.mp3"
+      },
+      {
+        "word": "effective",
+        "phonics": "/ɪˈfɛktɪv/",
+        "partOfSpeech": "adj",
+        "vietnameseMeaning": "hiệu quả",
+        "sampleSentence": "Group work can be very effective for learning.",
+        "vietnameseTranslation": "Làm việc nhóm có thể rất hiệu quả cho việc học.",
+        "image": "",
+        "wordPronunciation": "effective.mp3",
+        "sentencePronunciation": "group-work-can-be-very-effective-for-learning.mp3"
+      }
+    ]
+  }
+
