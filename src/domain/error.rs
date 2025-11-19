@@ -116,6 +116,13 @@ impl From<serde_json::Error> for AppError {
     }
 }
 
+// Implement the From trait for validator::ValidationErrors
+impl From<validator::ValidationErrors> for AppError {
+    fn from(err: validator::ValidationErrors) -> Self {
+        AppError::Validation(err.to_string())
+    }
+}
+
 // Implement the From trait for UserValidationError
 impl From<crate::domain::user::model::UserValidationError> for AppError {
     fn from(err: crate::domain::user::model::UserValidationError) -> Self {

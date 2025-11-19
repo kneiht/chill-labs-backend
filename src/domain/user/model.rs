@@ -1,8 +1,5 @@
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use validator::Validate;
-
-use crate::authorization::OwnedResource;
 
 // Role enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -20,23 +17,6 @@ pub enum UserStatus {
     Suspended,
 }
 
-// User struct
-#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
-pub struct User {
-    pub id: Uuid,
-    #[validate(length(min = 1, message = "Display name cannot be empty"))]
-    pub display_name: Option<String>,
-    #[validate(length(min = 1, message = "Username cannot be empty when provided"))]
-    pub username: Option<String>,
-    pub email: Option<String>,
-    #[validate(length(min = 8, message = "Password hash must be at least 8 characters"))]
-    pub password_hash: String,
-    pub role: Role,
-    pub status: UserStatus,
-    pub created: chrono::DateTime<chrono::Utc>,
-    pub updated: chrono::DateTime<chrono::Utc>,
-}
-
 // Validation error for User
 #[derive(Debug, Clone)]
 pub struct UserValidationError {
@@ -51,79 +31,87 @@ impl std::fmt::Display for UserValidationError {
 
 impl std::error::Error for UserValidationError {}
 
-// Implementation of OwnedResource for User
-// For User, the owner is themselves (their own id)
-impl OwnedResource for User {
-    fn owner_id(&self) -> Uuid {
-        self.id
-    }
-}
+// ============= Auth Request DTOs =============
 
-// Implementation of User
-impl User {
-    pub fn new(
-        display_name: Option<String>,
-        username: Option<String>,
-        email: Option<String>,
-        password_hash: String,
-        role: Role,
-    ) -> Self {
-        let now = chrono::Utc::now();
-
-        // TODO: Validate that at least one of username or email is provided
-
-        // Return a new instance of User
-        Self {
-            id: Uuid::now_v7(),
-            display_name,
-            username,
-            email,
-            password_hash,
-            role,
-            status: UserStatus::Pending,
-            created: now,
-            updated: now,
-        }
-    }
-}
-
-// Internal struct for database queries
-#[derive(sqlx::FromRow)]
-pub struct UserRow {
-    pub id: Uuid,
+/// Request body for user registration
+#[derive(Debug, Deserialize, Validate)]
+pub struct RegisterRequest {
+    #[validate(length(min = 1, message = "Display name cannot be empty"))]
     pub display_name: Option<String>,
+
+    #[validate(length(min = 3, message = "Username must be at least 3 characters"))]
     pub username: Option<String>,
+
+    #[validate(email(message = "Invalid email format"))]
     pub email: Option<String>,
-    pub password_hash: String,
-    pub role: String,
-    pub status: String,
-    pub created: chrono::DateTime<chrono::Utc>,
-    pub updated: chrono::DateTime<chrono::Utc>,
+
+    #[validate(length(min = 8, message = "Password must be at least 8 characters"))]
+    pub password: String,
 }
 
-// Implementation of From<UserRow> for User
-impl From<UserRow> for User {
-    fn from(row: UserRow) -> Self {
+/// Request body for user login
+#[derive(Debug, Deserialize, Validate)]
+pub struct LoginRequest {
+    /// Can be either email or username
+    #[validate(length(min = 1, message = "Login identifier cannot be empty"))]
+    pub login: String,
+
+    #[validate(length(min = 1, message = "Password cannot be empty"))]
+    pub password: String,
+}
+
+/// Request body for token refresh
+#[derive(Debug, Deserialize, Validate)]
+pub struct RefreshTokenRequest {
+    #[validate(length(min = 1, message = "Token cannot be empty"))]
+    pub token: String,
+}
+
+// ============= Auth Response DTOs =============
+
+/// Response for authentication operations (login, register)
+#[derive(Debug, Serialize)]
+pub struct AuthResponse {
+    pub access_token: String,
+    pub refresh_token: String,
+    pub user: UserInfo,
+}
+
+/// User information returned in auth responses
+#[derive(Debug, Serialize)]
+pub struct UserInfo {
+    pub id: String,
+    pub display_name: String,
+    pub username: String,
+    pub email: String,
+    pub role: Role,
+    pub status: UserStatus,
+}
+
+impl From<crate::entities::users::Model> for UserInfo {
+    fn from(user: crate::entities::users::Model) -> Self {
         Self {
-            id: row.id,
-            display_name: row.display_name,
-            username: row.username,
-            email: row.email,
-            password_hash: row.password_hash,
-            role: match row.role.as_str() {
-                "Student" => Role::Student,
-                "Teacher" => Role::Teacher,
-                "Admin" => Role::Admin,
-                _ => panic!("Invalid role: {}", row.role),
+            id: user.id.to_string(),
+            display_name: user.display_name.unwrap_or_default(),
+            username: user.username.unwrap_or_default(),
+            email: user.email.unwrap_or_default(),
+            role: match user.role.as_str() {
+                "admin" => Role::Admin,
+                "teacher" => Role::Teacher,
+                _ => Role::Student,
             },
-            status: match row.status.as_str() {
-                "Active" => UserStatus::Active,
-                "Pending" => UserStatus::Pending,
-                "Suspended" => UserStatus::Suspended,
-                _ => panic!("Invalid status: {}", row.status),
+            status: match user.status.as_str() {
+                "active" => UserStatus::Active,
+                "pending" => UserStatus::Pending,
+                "suspended" => UserStatus::Suspended,
+                _ => UserStatus::Suspended,
             },
-            created: row.created,
-            updated: row.updated,
         }
     }
+}
+
+/// Token refresh response
+#[derive(Debug, Serialize)]
+pub struct RefreshTokenResponse {
+    pub access_token: String,
 }

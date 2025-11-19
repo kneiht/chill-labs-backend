@@ -1,0 +1,41 @@
+[
+  {
+    "label": "GET /admin/users - List all users",
+    "method": "GET",
+    "path": "/admin/users"
+  },
+  {
+    "label": "GET /admin/notes - List all notes",
+    "method": "GET",
+    "path": "/admin/notes"
+  },
+  {
+    "label": "POST /admin/notes - Create a note",
+    "method": "POST",
+    "path": "/admin/notes",
+    "body": {
+      "title": "My New Note",
+      "content": "This is a note created via Admin API",
+      "owner_id": "REPLACE_WITH_UUID"
+    }
+  },
+  {
+    "label": "GET /admin/notes/{id} - Get a note",
+    "method": "GET",
+    "path": "/admin/notes/REPLACE_WITH_UUID"
+  },
+  {
+    "label": "PUT /admin/notes/{id} - Update a note",
+    "method": "PUT",
+    "path": "/admin/notes/REPLACE_WITH_UUID",
+    "body": {
+      "title": "Updated Title",
+      "content": "Updated content"
+    }
+  },
+  {
+    "label": "DELETE /admin/notes/{id} - Delete a note",
+    "method": "DELETE",
+    "path": "/admin/notes/REPLACE_WITH_UUID"
+  }
+]

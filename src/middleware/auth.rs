@@ -5,7 +5,7 @@ use axum::response::{IntoResponse, Response};
 
 use crate::domain::error::AppError;
 use crate::domain::response::Response as ApiResponse;
-use crate::domain::user::model::User;
+use crate::entities::users::Model as User;
 use crate::state::AppState;
 
 /// Middleware function to authenticate and authorize requests
@@ -25,8 +25,8 @@ pub async fn auth_middleware(
 
     // Verify token and get user
     let user = state
-        .auth_service
-        .verify_and_get_user(&token)
+        .user_service
+        .verify_token(&token)
         .await
         .map_err(|err| match err {
             AppError::Unauthorized(msg) => {

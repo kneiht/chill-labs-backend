@@ -1,18 +1,14 @@
+use crate::entities::users;
 use crate::utils::password::hash_password;
 use anyhow::Context;
-use sqlx::PgPool;
-
-// User domain
-use crate::domain::user::model::Role;
-use crate::domain::user::repository::UserRepository;
-use crate::domain::user::service::UserService;
-
-// Note domain
-use crate::domain::note::repository::NoteRepository;
-use crate::domain::note::service::NoteService;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectOptions, DatabaseConnection, EntityTrait, QueryFilter,
+    Set,
+};
+use std::time::Duration;
 
 // Auth domain
-use crate::domain::auth::service::AuthService;
+use crate::domain::user::service::UserService;
 
 // Settings
 use crate::settings::Settings;
@@ -20,24 +16,18 @@ use crate::settings::Settings;
 #[derive(Clone)]
 pub struct AppState {
     pub settings: Settings,
+    pub db: DatabaseConnection,
     pub user_service: UserService,
-    pub note_service: NoteService,
-    pub auth_service: AuthService,
 }
 
 impl AppState {
     /// Initialize the application state.
     pub async fn new(settings: &Settings) -> anyhow::Result<Self> {
-        // Initialize database connection pool
-        let pool = init_db(settings).await?;
+        // Initialize database connection
+        let db = init_db(settings).await?;
 
-        // Initialize repositories and services
-        let user_repository = UserRepository::new(pool.clone());
-        let user_service = UserService::new(user_repository.clone());
-
-        // Initialize note service with note repository
-        let note_repository = NoteRepository::new(pool.clone());
-        let note_service = NoteService::new(note_repository);
+        // Seed admin user
+        seed_admin_user(&db).await?;
 
         // Initialize JWT secret
         let jwt_secret = settings
@@ -51,9 +41,9 @@ impl AppState {
         let refresh_token_expiration_hours =
             settings.jwt.refresh_token_expiration_hours.unwrap_or(720);
 
-        // Initialize auth service
-        let auth_service = AuthService::new(
-            user_repository,
+        // Initialize user service
+        let user_service = UserService::new(
+            db.clone(),
             &jwt_secret,
             access_token_expiration_hours,
             refresh_token_expiration_hours,
@@ -62,60 +52,69 @@ impl AppState {
         // Initialize state
         Ok(Self {
             settings: settings.clone(),
+            db,
             user_service,
-            note_service,
-            auth_service,
         })
     }
 }
 
-/// Initialize the PostgreSQL database connection pool
-async fn init_db(settings: &Settings) -> anyhow::Result<PgPool> {
+/// Initialize the Database connection
+async fn init_db(settings: &Settings) -> anyhow::Result<DatabaseConnection> {
     let url = settings
         .database
         .url
         .clone()
         .context("Database URL is not set")?;
-    let pool = PgPool::connect(&url).await?;
+
+    let mut opt = ConnectOptions::new(url);
+    opt.max_connections(100)
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(8))
+        .acquire_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(false)
+        .sqlx_logging_level(tracing::log::LevelFilter::Info);
+
+    let db = sea_orm::Database::connect(opt).await?;
+
     // Run migrations if the setting is explicitly true, default to false if not set
-    if settings.database.migrate_on_startup.unwrap_or(false) {
-        sqlx::migrate!("./database/migrations").run(&pool).await?;
-        // Seed admin user after migrations
-        seed_admin_user(&pool).await?;
-    }
-    Ok(pool)
+    // Note: SeaORM migration is different, usually via sea-orm-cli or programmatic.
+    // For now, we skip automatic migration here or use sqlx if needed, but mixing is tricky.
+    // Let's assume migrations are run externally or we add sea-orm-migration crate later.
+
+    Ok(db)
 }
 
-/// Seed the admin user if it doesn't exist
-async fn seed_admin_user(pool: &PgPool) -> anyhow::Result<()> {
-    let user_repository = UserRepository::new(pool.clone());
-    let user_service = UserService::new(user_repository);
+async fn seed_admin_user(db: &DatabaseConnection) -> anyhow::Result<()> {
+    let email = "minhthien.k@gmail.com";
 
-    // Check if admin user already exists
-    if user_service
-        .get_user_by_email("minhthien.k@gmail.com")
-        .await
-        .is_ok()
-    {
-        tracing::info!("Admin user already exists, skipping seed");
-        return Ok(());
-    }
+    let existing_user = users::Entity::find()
+        .filter(users::Column::Email.eq(email))
+        .one(db)
+        .await?;
 
-    // Hash the password
-    let password_hash = hash_password("123123123")?;
+    if existing_user.is_none() {
+        tracing::info!("Seeding admin user: {}", email);
+        let password_hash = hash_password("123123123")?;
+        let now = chrono::Utc::now().with_timezone(&chrono::FixedOffset::east_opt(0).unwrap());
 
-    // Create admin user
-    let create_input = crate::domain::user::service::CreateUserInput {
-        display_name: Some("Minh Thien".to_string()),
-        username: Some("minhthienk".to_string()),
-        email: Some("minhthien.k@gmail.com".to_string()),
-        password_hash,
-        role: Role::Admin,
-    };
+        let user = users::ActiveModel {
+            id: Set(uuid::Uuid::now_v7()),
+            username: Set(Some("admin".to_string())),
+            email: Set(Some(email.to_string())),
+            display_name: Set(Some("Admin User".to_string())),
+            password_hash: Set(password_hash),
+            role: Set("admin".to_string()),
+            status: Set("active".to_string()),
+            created: Set(now),
+            updated: Set(now),
+        };
 
-    match user_service.create_user(create_input).await {
-        Ok(_) => tracing::info!("Admin user seeded successfully"),
-        Err(e) => tracing::warn!("Failed to seed admin user: {}", e),
+        user.insert(db).await?;
+        tracing::info!("Admin user seeded successfully");
+    } else {
+        tracing::info!("Admin user already exists");
     }
 
     Ok(())

@@ -8,10 +8,9 @@ use axum::{extract::Path, Router};
 use std::net::{IpAddr, SocketAddr};
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::domain::auth::auth_routes;
-use crate::domain::healthcheck::healthcheck_routes;
-use crate::domain::note::note_routes;
-use crate::domain::user::user_routes;
+use crate::domain::admin;
+use crate::domain::healthcheck::router as healthcheck_router;
+use crate::domain::user::router as user_router;
 use crate::middleware::auth_middleware;
 
 use serde_json::json;
@@ -63,10 +62,13 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         ])
         .allow_headers(Any);
 
+    // Shared state
+    let shared_state = std::sync::Arc::new(state.clone());
+
     // Protected routes (require authentication)
     let protected_routes = Router::new()
-        .nest("/users", user_routes())
-        .nest("/notes", note_routes())
+        .merge(admin::router())
+        .with_state(shared_state.clone())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
@@ -74,24 +76,20 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
 
     // Public routes
     let app = Router::new()
-        .nest("/healthcheck", healthcheck_routes())
-        .nest("/auth", auth_routes())
+        .nest("/healthcheck", healthcheck_router())
+        .nest("/auth", user_router())
         // Serve static files from the embedded assets
         .route(
             "/admin",
             get(|| async { static_handler(Path("admin.html".to_string())).await }),
         )
         .route(
-            "/note-app",
-            get(|| async { static_handler(Path("notes.html".to_string())).await }),
-        )
-        .route(
-            "/tester",
+            "/test",
             get(|| async { static_handler(Path("api.html".to_string())).await }),
         )
+        .with_state(shared_state)
         .merge(protected_routes)
         .fallback(fallback)
-        .with_state(state.clone())
         .layer(cors);
 
     // Server host ip

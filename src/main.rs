@@ -1,5 +1,5 @@
-mod authorization;
 mod domain;
+mod entities;
 mod middleware;
 mod server;
 mod settings;

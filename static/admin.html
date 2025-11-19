@@ -1,848 +1,481 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Panel</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chill Labs Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    body {
+      font-family: 'Inter', sans-serif;
     }
 
-    :root {
-      --scroll-track: #0f172a;
-      --scroll-thumb: #334155;
-      --scroll-thumb-hover: #475569;
-      --scroll-corner: #0b1228;
+    [x-cloak] {
+      display: none !important;
     }
 
-    /* Firefox */
-    * {
-      scrollbar-width: thin;
-      scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-    }
-
-    /* WebKit */
-    *::-webkit-scrollbar {
-      width: 12px;
-      height: 12px;
-    }
-
-    *::-webkit-scrollbar-track {
-      background: var(--scroll-track);
-      border-radius: 9999px;
-    }
-
-    *::-webkit-scrollbar-thumb {
-      background: linear-gradient(180deg,
-          rgba(51, 65, 85, 0.95),
-          rgba(30, 41, 59, 0.95));
-      border: 2px solid var(--scroll-track);
-      border-radius: 9999px;
-    }
-
-    *::-webkit-scrollbar-thumb:hover {
-      background: var(--scroll-thumb-hover);
-    }
-
-    *::-webkit-scrollbar-corner {
-      background: var(--scroll-corner);
-    }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th {
-      position: sticky;
-      top: 0;
-      background: #1e293b;
-      z-index: 10;
-    }
-
-    .btn-primary {
-      background-color: #4f46e5;
-      transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-      background-color: #4338ca;
-    }
-
-    .btn-secondary {
-      background-color: #1e293b;
-      border: 1px solid #334155;
-      transition: all 0.2s;
-    }
-
-    .btn-secondary:hover {
-      background-color: #334155;
-      border-color: #475569;
-    }
-
-    .btn-danger {
-      background-color: #dc2626;
-      transition: background-color 0.2s;
-    }
-
-    .btn-danger:hover {
-      background-color: #b91c1c;
-    }
-
-    .btn-sm {
-      padding: 4px 8px;
-      font-size: 11px;
-      border-radius: 4px;
-    }
-
-    .tab-btn {
-      padding: 8px 16px;
-      border-radius: 6px;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    .tab-btn.active {
-      background-color: #4f46e5;
-    }
-
-    .truncate-cell {
-      max-width: 200px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .glass {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
   </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              850: '#151f32',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
 </head>
 
-<body class="min-h-screen bg-slate-950 text-slate-100">
-  <div class="max-w-7xl mx-auto p-4">
-    <!-- Header -->
-    <header class="mb-6">
-      <div class="flex items-center justify-between">
-        <h1 class="text-3xl font-bold text-indigo-400">🔐 Admin Panel</h1>
-        <div id="user-info" class="hidden flex items-center gap-3">
-          <span class="text-sm text-slate-400">
-            Logged in as: <span id="user-name" class="text-slate-200 font-medium"></span>
-            (<span id="user-role" class="text-indigo-300"></span>)
-          </span>
-          <button id="btn-logout" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium">
-            Logout
+<body class="bg-slate-950 text-slate-200 min-h-screen selection:bg-indigo-500 selection:text-white" x-data="adminApp()">
+
+  <!-- Login Screen -->
+  <div x-show="!token"
+    class="fixed inset-0 flex items-center justify-center z-50 bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-slate-950">
+    <div class="glass p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-800 relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
+      <h2
+        class="text-3xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">
+        Chill Labs</h2>
+      <p class="text-slate-400 text-center mb-8 text-sm">Admin Dashboard Access</p>
+
+      <form @submit.prevent="login">
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Login (Email or
+              Username)</label>
+            <input x-model="loginForm.login" type="text"
+              class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+              placeholder="admin@example.com">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-400 mb-1 uppercase tracking-wider">Password</label>
+            <input x-model="loginForm.password" type="password"
+              class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all placeholder-slate-600"
+              placeholder="••••••••">
+          </div>
+        </div>
+
+        <div x-show="loginError"
+          class="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm text-center"
+          x-text="loginError"></div>
+
+        <button type="submit"
+          class="w-full mt-8 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-medium py-3 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/20">
+          <span x-show="!isLoading">Sign In</span>
+          <span x-show="isLoading" class="animate-pulse">Authenticating...</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Dashboard -->
+  <div x-show="token" x-cloak class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass border-r border-slate-800 flex flex-col z-20">
+      <div class="p-6 border-b border-slate-800/50">
+        <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Chill
+          Labs</h1>
+        <p class="text-xs text-slate-500 mt-1">Admin Console</p>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto p-4 space-y-1">
+        <template x-for="entity in entities" :key="entity.name">
+          <button @click="currentEntity = entity.name; fetchItems()"
+            :class="currentEntity === entity.name ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/50' : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border-transparent'"
+            class="w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg border transition-all group">
+            <span class="w-2 h-2 rounded-full mr-3 transition-colors"
+              :class="currentEntity === entity.name ? 'bg-indigo-400' : 'bg-slate-600 group-hover:bg-slate-500'"></span>
+            <span x-text="entity.label"></span>
+          </button>
+        </template>
+      </nav>
+
+      <div class="p-4 border-t border-slate-800/50">
+        <div class="flex items-center gap-3 mb-4 px-2">
+          <div
+            class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-xs font-bold">
+            A</div>
+          <div class="overflow-hidden">
+            <p class="text-sm font-medium truncate" x-text="user?.display_name || 'Admin'"></p>
+            <p class="text-xs text-slate-500 truncate" x-text="user?.email || 'admin@chill-labs.com'"></p>
+          </div>
+        </div>
+        <button @click="logout"
+          class="w-full flex items-center justify-center px-4 py-2 text-xs font-medium text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-800 rounded-lg transition-colors">
+          Sign Out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
+      <!-- Background Glow -->
+      <div
+        class="absolute top-0 left-0 w-full h-96 bg-indigo-500/5 rounded-full blur-3xl -translate-y-1/2 pointer-events-none">
+      </div>
+
+      <!-- Header -->
+      <header class="h-16 border-b border-slate-800/50 flex items-center justify-between px-8 glass z-10">
+        <h2 class="text-lg font-medium text-slate-200 capitalize" x-text="currentEntityLabel"></h2>
+        <div class="flex items-center gap-4">
+          <button @click="fetchItems()" class="p-2 text-slate-400 hover:text-white transition-colors" title="Refresh">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+              </path>
+            </svg>
+          </button>
+          <button @click="openModal()"
+            class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Create New</span>
           </button>
         </div>
-      </div>
-    </header>
+      </header>
 
-    <!-- Auth Section -->
-    <section id="auth-section" class="max-w-md mx-auto">
-      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-6 shadow-lg">
-        <h2 class="text-xl font-semibold mb-4">Admin Login</h2>
-        <form id="login-form" class="grid gap-4">
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Email or Username</label>
-            <input id="login-username" type="text" required
-              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
+      <!-- Table View -->
+      <div class="flex-1 overflow-auto p-8">
+        <div class="glass rounded-xl border border-slate-800 overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="bg-slate-900/50 border-b border-slate-800 text-xs uppercase tracking-wider text-slate-400">
+                  <template x-for="col in currentColumns" :key="col">
+                    <th class="px-6 py-4 font-medium" x-text="col"></th>
+                  </template>
+                  <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-800/50">
+                <template x-for="item in items" :key="item.id">
+                  <tr class="hover:bg-slate-800/30 transition-colors group">
+                    <template x-for="col in currentColumns" :key="col">
+                      <td class="px-6 py-4 text-sm text-slate-300 whitespace-nowrap">
+                        <div class="max-w-xs truncate" x-text="formatValue(item[col])"></div>
+                      </td>
+                    </template>
+                    <td class="px-6 py-4 text-right space-x-2">
+                      <button @click="openModal(item)"
+                        class="text-indigo-400 hover:text-indigo-300 text-xs font-medium px-2 py-1 rounded hover:bg-indigo-500/10 transition-colors">Edit</button>
+                      <button @click="deleteItem(item.id)"
+                        class="text-red-400 hover:text-red-300 text-xs font-medium px-2 py-1 rounded hover:bg-red-500/10 transition-colors">Delete</button>
+                    </td>
+                  </tr>
+                </template>
+                <tr x-show="items.length === 0">
+                  <td :colspan="currentColumns.length + 1" class="px-6 py-12 text-center text-slate-500">
+                    No items found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div>
-            <label class="text-xs text-slate-400 block mb-1">Password</label>
-            <input id="login-password" type="password" required
-              class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-          </div>
-          <button type="submit" class="btn-primary px-4 py-2 rounded-md text-sm font-medium">
-            Login
-          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div x-show="isModalOpen" x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" x-transition.opacity>
+    <div
+      class="glass w-full max-w-lg rounded-xl border border-slate-700 shadow-2xl overflow-hidden transform transition-all"
+      @click.away="closeModal()">
+      <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+        <h3 class="text-lg font-medium text-white" x-text="editingItem ? 'Edit Item' : 'Create New Item'"></h3>
+        <button @click="closeModal()" class="text-slate-400 hover:text-white transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+        <form @submit.prevent="saveItem" class="space-y-4">
+          <template x-for="field in currentFields" :key="field.name">
+            <div>
+              <label class="block text-xs font-medium text-slate-400 mb-1 uppercase" x-text="field.label"></label>
+
+              <template x-if="field.type === 'text' || field.type === 'email' || field.type === 'password'">
+                <input :type="field.type" x-model="formData[field.name]"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-white">
+              </template>
+
+              <template x-if="field.type === 'textarea'">
+                <textarea x-model="formData[field.name]" rows="3"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-white"></textarea>
+              </template>
+
+              <template x-if="field.type === 'select'">
+                <select x-model="formData[field.name]"
+                  class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all text-white">
+                  <template x-for="opt in field.options" :key="opt">
+                    <option :value="opt" x-text="opt"></option>
+                  </template>
+                </select>
+              </template>
+            </div>
+          </template>
         </form>
-        <div id="auth-message" class="mt-4 text-sm text-center"></div>
       </div>
-    </section>
-
-    <!-- Admin Section -->
-    <section id="admin-section" class="hidden">
-      <!-- Tabs -->
-      <div class="flex gap-2 mb-4">
-        <button id="tab-users" class="tab-btn active" onclick="switchTab('users')">
-          👥 Users
-        </button>
-        <button id="tab-notes" class="tab-btn" onclick="switchTab('notes')">
-          📝 Notes
-        </button>
+      <div class="px-6 py-4 border-t border-slate-700 bg-slate-900/50 flex justify-end gap-3">
+        <button @click="closeModal()"
+          class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">Cancel</button>
+        <button @click="saveItem"
+          class="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg shadow-lg shadow-indigo-500/20 transition-all">Save
+          Changes</button>
       </div>
-
-      <!-- Users Table -->
-      <div id="users-panel" class="rounded-xl border border-slate-800 bg-slate-900/60 shadow-lg">
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Users Management</h2>
-          <div class="flex gap-2">
-            <button id="btn-create-user" class="btn-primary px-4 py-2 rounded-md text-sm font-medium"
-              onclick="openCreateUserModal()">
-              ✨ Create User
-            </button>
-            <button id="btn-refresh-users" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium"
-              onclick="loadUsers()">
-              🔄 Refresh
-            </button>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-slate-800">
-                <th class="px-4 py-3 text-left font-medium text-slate-300">ID</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Display Name</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Email</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Username</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Role</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Created</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="users-table-body">
-              <!-- Users will be loaded here -->
-            </tbody>
-          </table>
-        </div>
-        <div id="users-empty" class="p-8 text-center text-slate-400 hidden">
-          No users found.
-        </div>
-      </div>
-
-      <!-- Notes Table -->
-      <div id="notes-panel" class="rounded-xl border border-slate-800 bg-slate-900/60 shadow-lg hidden">
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
-          <h2 class="text-xl font-semibold">Notes Management</h2>
-          <div class="flex gap-2">
-            <button id="btn-create-note" class="btn-primary px-4 py-2 rounded-md text-sm font-medium"
-              onclick="openCreateNoteModal()">
-              ✨ Create Note
-            </button>
-            <button id="btn-refresh-notes" class="btn-secondary px-4 py-2 rounded-md text-sm font-medium"
-              onclick="loadNotes()">
-              🔄 Refresh
-            </button>
-          </div>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-slate-800">
-                <th class="px-4 py-3 text-left font-medium text-slate-300">ID</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">User ID</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Title</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Content</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Created</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Updated</th>
-                <th class="px-4 py-3 text-left font-medium text-slate-300">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="notes-table-body">
-              <!-- Notes will be loaded here -->
-            </tbody>
-          </table>
-        </div>
-        <div id="notes-empty" class="p-8 text-center text-slate-400 hidden">
-          No notes found.
-        </div>
-      </div>
-    </section>
-
-    <footer class="mt-8 text-center text-xs text-slate-400">
-      Admin Panel - English Coaching Platform
-    </footer>
-  </div>
-
-  <!-- Create Note Modal -->
-  <div id="create-note-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 w-full max-w-md">
-      <h3 class="text-xl font-semibold mb-4">Create New Note</h3>
-      <form id="create-note-form" class="grid gap-4">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">User ID</label>
-          <input id="create-note-user-id" type="text" required placeholder="Enter the owner's User ID"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Title</label>
-          <input id="create-note-title" type="text" required
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Content</label>
-          <textarea id="create-note-content" required rows="6"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 px-4 py-2 rounded-md text-sm font-medium">Create Note</button>
-          <button type="button" onclick="closeCreateNoteModal()"
-            class="btn-secondary flex-1 px-4 py-2 rounded-md text-sm font-medium">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Create User Modal -->
-  <div id="create-user-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 w-full max-w-md">
-      <h3 class="text-xl font-semibold mb-4">Create New User</h3>
-      <form id="create-user-form" class="grid gap-4">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Display Name</label>
-          <input id="create-user-display-name" type="text"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Email</label>
-          <input id="create-user-email" type="email"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Username</label>
-          <input id="create-user-username" type="text"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Password</label>
-          <input id="create-user-password" type="password" required
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Role</label>
-          <select id="create-user-role"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500">
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 px-4 py-2 rounded-md text-sm font-medium">Create User</button>
-          <button type="button" onclick="closeCreateUserModal()"
-            class="btn-secondary flex-1 px-4 py-2 rounded-md text-sm font-medium">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit User Modal -->
-  <div id="edit-user-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 w-full max-w-md">
-      <h3 class="text-xl font-semibold mb-4">Edit User</h3>
-      <form id="edit-user-form" class="grid gap-4">
-        <input type="hidden" id="edit-user-id">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Display Name</label>
-          <input id="edit-user-display-name" type="text"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Email</label>
-          <input id="edit-user-email" type="email"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Username</label>
-          <input id="edit-user-username" type="text"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Role</label>
-          <select id="edit-user-role"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500">
-            <option value="student">Student</option>
-            <option value="teacher">Teacher</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 px-4 py-2 rounded-md text-sm font-medium">
-            Save Changes
-          </button>
-          <button type="button" onclick="closeEditUserModal()"
-            class="btn-secondary flex-1 px-4 py-2 rounded-md text-sm font-medium">
-            Cancel
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Note Modal -->
-  <div id="edit-note-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 w-full max-w-md">
-      <h3 class="text-xl font-semibold mb-4">Edit Note</h3>
-      <form id="edit-note-form" class="grid gap-4">
-        <input type="hidden" id="edit-note-id">
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Title</label>
-          <input id="edit-note-title" type="text" required
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500" />
-        </div>
-        <div>
-          <label class="text-xs text-slate-400 block mb-1">Content</label>
-          <textarea id="edit-note-content" required rows="6"
-            class="w-full rounded-md bg-slate-900/70 border border-slate-800 px-3 py-2 text-sm outline-none focus:border-indigo-500"></textarea>
-        </div>
-        <div class="flex gap-3">
-          <button type="submit" class="btn-primary flex-1 px-4 py-2 rounded-md text-sm font-medium">
-            Save Changes
-          </button>
-          <button type="button" onclick="closeEditNoteModal()"
-            class="btn-secondary flex-1 px-4 py-2 rounded-md text-sm font-medium">
-            Cancel
-          </button>
-        </div>
-      </form>
     </div>
   </div>
 
   <script>
-    const API_URL = '';
-    const $ = (id) => document.getElementById(id);
+    function adminApp() {
+      return {
+        token: localStorage.getItem('api-token') || null,
+        user: null,
+        loginForm: { login: '', password: '' },
+        loginError: '',
+        isLoading: false,
 
-    let authToken = localStorage.getItem('admin-token') || '';
-    let currentUser = null;
+        entities: [
+          { name: 'users', label: 'Users' },
+          { name: 'notes', label: 'Notes' },
+          { name: 'lessons', label: 'Lessons' },
+          { name: 'sentences', label: 'Sentences' },
+          { name: 'vocabs', label: 'Vocabs' },
+          { name: 'words', label: 'Words' },
+          { name: 'word_sentences', label: 'Word Sentences' }
+        ],
+        currentEntity: 'users',
+        items: [],
 
-    // Utility functions
-    function showMessage(message, isError = false) {
-      const el = $('auth-message');
-      el.textContent = message;
-      el.className = `mt-4 text-sm text-center ${isError ? 'text-red-400' : 'text-green-400'}`;
-    }
+        isModalOpen: false,
+        editingItem: null,
+        formData: {},
 
-    function showAuthSection() {
-      $('auth-section').classList.remove('hidden');
-      $('admin-section').classList.add('hidden');
-      $('user-info').classList.add('hidden');
-    }
-
-    function showAdminSection() {
-      $('auth-section').classList.add('hidden');
-      $('admin-section').classList.remove('hidden');
-      $('user-info').classList.remove('hidden');
-    }
-
-    function switchTab(tab) {
-      // Update tab buttons
-      $('tab-users').classList.toggle('active', tab === 'users');
-      $('tab-notes').classList.toggle('active', tab === 'notes');
-
-      // Update panels
-      $('users-panel').classList.toggle('hidden', tab !== 'users');
-      $('notes-panel').classList.toggle('hidden', tab !== 'notes');
-
-      // Load data
-      if (tab === 'users') {
-        loadUsers();
-      } else if (tab === 'notes') {
-        loadNotes();
-      }
-    }
-
-    async function apiCall(endpoint, options = {}) {
-      const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      };
-
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-      }
-
-      const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Request failed: ${response.status}`);
-      }
-
-      return data;
-    }
-
-    // Auth functions
-    async function login(e) {
-      e.preventDefault();
-      try {
-        const username = $('login-username').value;
-        const password = $('login-password').value;
-
-        const data = await apiCall('/auth/login', {
-          method: 'POST',
-          body: JSON.stringify({
-            login: username,
-            password: password,
-          }),
-        });
-
-        authToken = data.data.access_token;
-        localStorage.setItem('admin-token', authToken);
-        // The login response already contains the user object.
-        // We can use it directly instead of making another API call.
-        currentUser = data.data.user;
-
-        // Check if user is admin
-        if (currentUser.role !== 'Admin') {
-          showMessage('Access denied. Admin privileges required.', true);
-          logout();
-          return;
-        }
-
-        updateUserInfoHeader();
-        showAdminSection();
-        await loadUsers();
-      } catch (error) {
-        showMessage(error.message, true);
-      }
-    }
-
-    async function loadCurrentUser() {
-      try {
-        const data = await apiCall('/auth/me');
-        currentUser = data.data;
-        updateUserInfoHeader();
-      } catch (error) {
-        console.error('Failed to load user:', error);
-        logout();
-      }
-    }
-
-    function logout() {
-      authToken = '';
-      currentUser = null;
-      localStorage.removeItem('admin-token');
-      showAuthSection();
-    }
-
-    function updateUserInfoHeader() {
-      if (currentUser) {
-        $('user-name').textContent = currentUser.display_name || currentUser.username || currentUser.email || 'User';
-        $('user-role').textContent = currentUser.role || 'student';
-      }
-    }
-
-    // Users management
-    async function loadUsers() {
-      try {
-        const data = await apiCall('/users');
-        const users = data.data;
-        const tbody = $('users-table-body');
-        const empty = $('users-empty');
-
-        if (users.length === 0) {
-          tbody.innerHTML = '';
-          empty.classList.remove('hidden');
-          return;
-        }
-
-        empty.classList.add('hidden');
-        tbody.innerHTML = users.map(user => `
-          <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-            <td class="px-4 py-3 text-xs text-slate-400 truncate-cell" title="${user.id}">${user.id.substring(0, 8)}...</td>
-            <td class="px-4 py-3">${escapeHtml(user.display_name || '-')}</td>
-            <td class="px-4 py-3">${escapeHtml(user.email || '-')}</td>
-            <td class="px-4 py-3">${escapeHtml(user.username || '-')}</td>
-            <td class="px-4 py-3">
-              <span class="px-2 py-1 rounded text-xs ${getRoleBadgeClass(user.role)}">
-                ${user.role || 'student'}
-              </span>
-            </td>
-            <td class="px-4 py-3 text-xs text-slate-400">${new Date(user.created).toLocaleString()}</td>
-            <td class="px-4 py-3">
-              <div class="flex gap-2">
-                <button onclick="editUser('${user.id}')" class="btn-secondary btn-sm">
-                  ✏️ Edit
-                </button>
-                <button onclick="deleteUser('${user.id}')" class="btn-danger btn-sm">
-                  🗑️ Delete
-                </button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-      } catch (error) {
-        console.error('Failed to load users:', error);
-        alert('Failed to load users: ' + error.message);
-      }
-    }
-
-    function openCreateUserModal() {
-      $('create-user-form').reset();
-      $('create-user-modal').classList.remove('hidden');
-    }
-
-    function closeCreateUserModal() {
-      $('create-user-modal').classList.add('hidden');
-    }
-
-    async function createUser(e) {
-      e.preventDefault();
-      try {
-        const body = {
-          password: $('create-user-password').value,
-          role: $('create-user-role').value,
-        };
-
-        const displayName = $('create-user-display-name').value.trim();
-        const email = $('create-user-email').value.trim();
-        const username = $('create-user-username').value.trim();
-
-        if (displayName) body.display_name = displayName;
-        if (email) body.email = email;
-        if (username) body.username = username;
-
-        await apiCall('/users', {
-          method: 'POST',
-          body: JSON.stringify(body),
-        });
-
-        closeCreateUserModal();
-        await loadUsers();
-        alert('User created successfully!');
-      } catch (error) {
-        alert('Failed to create user: ' + error.message);
-      }
-    }
-
-    function getRoleBadgeClass(role) {
-      switch (role) {
-        case 'admin': return 'bg-red-900/50 text-red-300';
-        case 'teacher': return 'bg-indigo-900/50 text-indigo-300';
-        default: return 'bg-slate-700 text-slate-300';
-      }
-    }
-
-    async function editUser(userId) {
-      try {
-        const data = await apiCall(`/users/${userId}`);
-        const user = data.data;
-
-        $('edit-user-id').value = user.id;
-        $('edit-user-display-name').value = user.display_name || '';
-        $('edit-user-email').value = user.email || '';
-        $('edit-user-username').value = user.username || '';
-        $('edit-user-role').value = user.role || 'student';
-
-        $('edit-user-modal').classList.remove('hidden');
-      } catch (error) {
-        alert('Failed to load user: ' + error.message);
-      }
-    }
-
-    function closeEditUserModal() {
-      $('edit-user-modal').classList.add('hidden');
-    }
-
-    async function saveUser(e) {
-      e.preventDefault();
-      try {
-        const userId = $('edit-user-id').value;
-        const body = {};
-
-        const displayName = $('edit-user-display-name').value.trim();
-        const email = $('edit-user-email').value.trim();
-        const username = $('edit-user-username').value.trim();
-        const role = $('edit-user-role').value;
-
-        if (displayName) body.display_name = displayName;
-        if (email) body.email = email;
-        if (username) body.username = username;
-        if (role) body.role = role;
-
-        await apiCall(`/users/${userId}`, {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        });
-
-        closeEditUserModal();
-        await loadUsers();
-        alert('User updated successfully!');
-      } catch (error) {
-        alert('Failed to update user: ' + error.message);
-      }
-    }
-
-    async function deleteUser(userId) {
-      if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-        return;
-      }
-
-      try {
-        await apiCall(`/users/${userId}`, {
-          method: 'DELETE',
-        });
-        await loadUsers();
-        alert('User deleted successfully!');
-      } catch (error) {
-        alert('Failed to delete user: ' + error.message);
-      }
-    }
-
-    function openCreateNoteModal() {
-      $('create-note-form').reset();
-      $('create-note-modal').classList.remove('hidden');
-    }
-
-    function closeCreateNoteModal() {
-      $('create-note-modal').classList.add('hidden');
-    }
-
-    async function createNote(e) {
-      e.preventDefault();
-      try {
-        const body = {
-          user_id: $('create-note-user-id').value.trim(),
-          title: $('create-note-title').value.trim(),
-          content: $('create-note-content').value.trim(),
-        };
-
-        await apiCall('/notes', {
-          method: 'POST',
-          body: JSON.stringify(body),
-        });
-
-        closeCreateNoteModal();
-        await loadNotes();
-        alert('Note created successfully!');
-      } catch (error) {
-        alert('Failed to create note: ' + error.message);
-      }
-    }
-
-    // Notes management
-    async function loadNotes() {
-      try {
-        const data = await apiCall('/notes');
-        const notes = data.data;
-        const tbody = $('notes-table-body');
-        const empty = $('notes-empty');
-
-        if (notes.length === 0) {
-          tbody.innerHTML = '';
-          empty.classList.remove('hidden');
-          return;
-        }
-
-        empty.classList.add('hidden');
-        tbody.innerHTML = notes.map(note => `
-          <tr class="border-b border-slate-800 hover:bg-slate-800/50">
-            <td class="px-4 py-3 text-xs text-slate-400 truncate-cell" title="${note.id}">${note.id.substring(0, 8)}...</td>
-            <td class="px-4 py-3 text-xs text-slate-400 truncate-cell" title="${note.user_id}">${note.user_id.substring(0, 8)}...</td>
-            <td class="px-4 py-3 truncate-cell" title="${escapeHtml(note.title)}">${escapeHtml(note.title)}</td>
-            <td class="px-4 py-3 truncate-cell" title="${escapeHtml(note.content)}">${escapeHtml(note.content.substring(0, 50))}${note.content.length > 50 ? '...' : ''}</td>
-            <td class="px-4 py-3 text-xs text-slate-400">${new Date(note.created).toLocaleString()}</td>
-            <td class="px-4 py-3 text-xs text-slate-400">${new Date(note.updated).toLocaleString()}</td>
-            <td class="px-4 py-3">
-              <div class="flex gap-2">
-                <button onclick="editNote('${note.id}')" class="btn-secondary btn-sm">
-                  ✏️ Edit
-                </button>
-                <button onclick="deleteNote('${note.id}')" class="btn-danger btn-sm">
-                  🗑️ Delete
-                </button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-      } catch (error) {
-        console.error('Failed to load notes:', error);
-        alert('Failed to load notes: ' + error.message);
-      }
-    }
-
-    async function editNote(noteId) {
-      try {
-        const data = await apiCall(`/notes/${noteId}`);
-        const note = data.data;
-
-        $('edit-note-id').value = note.id;
-        $('edit-note-title').value = note.title;
-        $('edit-note-content').value = note.content;
-
-        $('edit-note-modal').classList.remove('hidden');
-      } catch (error) {
-        alert('Failed to load note: ' + error.message);
-      }
-    }
-
-    function closeEditNoteModal() {
-      $('edit-note-modal').classList.add('hidden');
-    }
-
-    async function saveNote(e) {
-      e.preventDefault();
-      try {
-        const noteId = $('edit-note-id').value;
-        const body = {
-          title: $('edit-note-title').value,
-          content: $('edit-note-content').value,
-        };
-
-        await apiCall(`/notes/${noteId}`, {
-          method: 'PUT',
-          body: JSON.stringify(body),
-        });
-
-        closeEditNoteModal();
-        await loadNotes();
-        alert('Note updated successfully!');
-      } catch (error) {
-        alert('Failed to update note: ' + error.message);
-      }
-    }
-
-    async function deleteNote(noteId) {
-      if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
-        return;
-      }
-
-      try {
-        await apiCall(`/notes/${noteId}`, {
-          method: 'DELETE',
-        });
-        await loadNotes();
-        alert('Note deleted successfully!');
-      } catch (error) {
-        alert('Failed to delete note: ' + error.message);
-      }
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    // Event listeners
-    $('login-form').addEventListener('submit', login);
-    $('btn-logout').addEventListener('click', logout);
-    $('create-user-form').addEventListener('submit', createUser);
-    $('create-note-form').addEventListener('submit', createNote);
-    $('edit-user-form').addEventListener('submit', saveUser);
-    $('edit-note-form').addEventListener('submit', saveNote);
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (authToken) {
-        try {
-          await loadCurrentUser();
-          if (currentUser && currentUser.role === 'admin') {
-            showAdminSection();
-            await loadUsers();
-          } else {
-            logout();
+        // Entity Configuration (Fields for Form & Table)
+        entityConfig: {
+          users: {
+            columns: ['id', 'username', 'email', 'role', 'status', 'created'],
+            fields: [
+              { name: 'username', label: 'Username', type: 'text' },
+              { name: 'email', label: 'Email', type: 'email' },
+              { name: 'display_name', label: 'Display Name', type: 'text' },
+              { name: 'password', label: 'Password (Leave blank to keep)', type: 'password' },
+              { name: 'role', label: 'Role', type: 'select', options: ['admin', 'teacher', 'student'] },
+              { name: 'status', label: 'Status', type: 'select', options: ['active', 'pending', 'suspended'] }
+            ]
+          },
+          notes: {
+            columns: ['id', 'title', 'owner_id', 'created_at'],
+            fields: [
+              { name: 'title', label: 'Title', type: 'text' },
+              { name: 'content', label: 'Content', type: 'textarea' },
+              { name: 'owner_id', label: 'Owner ID (UUID)', type: 'text' }
+            ]
+          },
+          // Default fallback for others
+          default: {
+            columns: ['id', 'name', 'title', 'created_at'],
+            fields: [
+              { name: 'title', label: 'Title/Name', type: 'text' },
+              { name: 'content', label: 'Content', type: 'textarea' }
+            ]
           }
-        } catch (error) {
-          logout();
+        },
+
+        get currentEntityLabel() {
+          return this.entities.find(e => e.name === this.currentEntity)?.label || this.currentEntity;
+        },
+
+        get currentConfig() {
+          return this.entityConfig[this.currentEntity] || this.entityConfig.default;
+        },
+
+        get currentColumns() {
+          // If we have items, try to use keys from first item if config is missing
+          if (this.items.length > 0 && !this.entityConfig[this.currentEntity]) {
+            return Object.keys(this.items[0]).slice(0, 6);
+          }
+          return this.currentConfig.columns;
+        },
+
+        get currentFields() {
+          return this.currentConfig.fields;
+        },
+
+        init() {
+          if (this.token) {
+            this.fetchUser();
+            this.fetchItems();
+          }
+        },
+
+        async login() {
+          this.isLoading = true;
+          this.loginError = '';
+          try {
+            const res = await fetch('/auth/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.loginForm)
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+              this.token = data.data.access_token;
+              this.user = data.data.user;
+              localStorage.setItem('api-token', this.token);
+              this.fetchItems();
+            } else {
+              this.loginError = data.message || 'Login failed';
+            }
+          } catch (e) {
+            this.loginError = 'Network error occurred';
+          } finally {
+            this.isLoading = false;
+          }
+        },
+
+        logout() {
+          this.token = null;
+          this.user = null;
+          localStorage.removeItem('api-token');
+        },
+
+        async fetchUser() {
+          try {
+            const res = await fetch('/auth/me', {
+              headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              this.user = data.data;
+            } else {
+              this.logout(); // Token invalid
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        async fetchItems() {
+          if (!this.token) return;
+          try {
+            const res = await fetch(`/admin/${this.currentEntity}`, {
+              headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              this.items = Array.isArray(data.data) ? data.data : [];
+            } else {
+              if (res.status === 401) this.logout();
+              alert('Failed to fetch items');
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        },
+
+        openModal(item = null) {
+          console.log('openModal called with:', item);
+          this.editingItem = item;
+          this.formData = item ? JSON.parse(JSON.stringify(item)) : {}; // Deep copy to avoid Proxy issues
+          // Clear password for user edit
+          if (this.currentEntity === 'users' && item) {
+            this.formData.password = '';
+          }
+          this.isModalOpen = true;
+          console.log('isModalOpen:', this.isModalOpen);
+        },
+
+        closeModal() {
+          this.isModalOpen = false;
+          this.editingItem = null;
+          this.formData = {};
+        },
+
+        async saveItem() {
+          console.log('saveItem called');
+          const url = this.editingItem
+            ? `/admin/${this.currentEntity}/${this.editingItem.id}`
+            : `/admin/${this.currentEntity}`;
+
+          console.log('Saving to URL:', url);
+          console.log('Data:', this.formData);
+
+          const method = this.editingItem ? 'PUT' : 'POST';
+
+          // Clean up empty password for users
+          if (this.currentEntity === 'users' && !this.formData.password) {
+            delete this.formData.password;
+          }
+
+          try {
+            const res = await fetch(url, {
+              method,
+              headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify(this.formData)
+            });
+
+            if (res.ok) {
+              this.closeModal();
+              this.fetchItems();
+            } else {
+              const data = await res.json();
+              alert(data.message || 'Operation failed');
+            }
+          } catch (e) {
+            alert('Network error');
+          }
+        },
+
+        async deleteItem(id) {
+          if (!confirm('Are you sure you want to delete this item?')) return;
+
+          try {
+            const res = await fetch(`/admin/${this.currentEntity}/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${this.token}` }
+            });
+
+            if (res.ok) {
+              this.fetchItems();
+            } else {
+              alert('Failed to delete item');
+            }
+          } catch (e) {
+            alert('Network error');
+          }
+        },
+
+        formatValue(val) {
+          if (val === null || val === undefined) return '-';
+          if (typeof val === 'object') return JSON.stringify(val);
+          if (typeof val === 'string' && val.length > 50) return val.substring(0, 50) + '...';
+          return val;
         }
       }
-    });
+    }
   </script>
 </body>
 

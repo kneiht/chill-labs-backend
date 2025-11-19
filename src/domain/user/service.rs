@@ -1,193 +1,248 @@
-use uuid::Uuid;
+// Import Domain
+use crate::entities::users::{self, Entity as Users, Model as UserModel};
+use sea_orm::*;
+
+// Import Dtos
+use super::model::{
+    AuthResponse, LoginRequest, RefreshTokenRequest, RefreshTokenResponse, RegisterRequest,
+};
+
+// Import Utils
+use crate::domain::error::AppError;
+use crate::utils::jwt::{JwtUtil, TokenType};
+use crate::utils::password::{hash_password, verify_password};
 use validator::Validate;
 
-// Import user model
-use super::model::{Role, User, UserStatus};
-
-// Import user repository
-use super::repository::UserRepository;
-
-// Import error handling
-use crate::domain::error::AppError;
-
-// Import Transformer trait
-use crate::domain::Transformer;
-
-// Create user dto
-#[derive(Debug, Validate)]
-pub struct CreateUserInput {
-    #[validate(length(min = 1, message = "Display name cannot be empty"))]
-    pub display_name: Option<String>,
-    #[validate(length(min = 1, message = "Username cannot be empty"))]
-    pub username: Option<String>,
-    #[validate(email(message = "Invalid email format"))]
-    pub email: Option<String>,
-    pub password_hash: String,
-    pub role: Role,
-}
-
-// Update user dto
-#[derive(Debug, Validate)]
-pub struct UpdateUserInput {
-    pub id: Uuid,
-    #[validate(length(min = 1, message = "Display name cannot be empty"))]
-    pub display_name: Option<String>,
-    #[validate(length(min = 1, message = "Username cannot be empty"))]
-    pub username: Option<String>,
-    #[validate(email(message = "Invalid email format"))]
-    pub email: Option<String>,
-    pub role: Option<Role>,
-    pub status: Option<UserStatus>,
-}
-
-// UserService struct
+/// UserService handles authentication and user management logic
 #[derive(Clone)]
 pub struct UserService {
-    repository: UserRepository,
+    db: DatabaseConnection,
+    jwt_util: JwtUtil,
 }
 
-// Implementation of UserService
 impl UserService {
-    pub fn new(repository: UserRepository) -> Self {
-        Self { repository }
+    /// Create a new UserService instance
+    pub fn new(
+        db: DatabaseConnection,
+        jwt_secret: &str,
+        access_token_expiration_hours: i64,
+        refresh_token_expiration_hours: i64,
+    ) -> Self {
+        Self {
+            db,
+            jwt_util: JwtUtil::new(
+                jwt_secret,
+                access_token_expiration_hours,
+                refresh_token_expiration_hours,
+            ),
+        }
     }
 
-    // Create user
-    pub async fn create_user<T: Transformer<CreateUserInput>>(
-        &self,
-        to_create_user_input: T,
-    ) -> Result<User, AppError> {
-        // Validate and transform input
-        let create_user_input = to_create_user_input.transform()?;
+    /// Register a new user
+    pub async fn register(&self, register_req: RegisterRequest) -> Result<AuthResponse, AppError> {
+        // Validate input
+        register_req.validate().map_err(AppError::from)?;
 
-        // Create user
-        let user = User::new(
-            create_user_input.display_name,
-            create_user_input.username,
-            create_user_input.email,
-            create_user_input.password_hash,
-            create_user_input.role,
-        );
+        // Validate that at least username or email is provided
+        if register_req.username.is_none() && register_req.email.is_none() {
+            return Err(AppError::validation(
+                "Either username or email must be provided",
+            ));
+        }
 
         // Check if username already exists
-        if let Some(username) = &user.username {
-            if self
-                .repository
-                .find_by_username(username.as_str())
-                .await?
-                .is_some()
-            {
+        if let Some(username) = &register_req.username {
+            let existing_user = Users::find()
+                .filter(users::Column::Username.eq(username))
+                .one(&self.db)
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+
+            if existing_user.is_some() {
                 return Err(AppError::username_already_exists(username));
             }
         }
 
-        // Check if email already exists if provided
-        if let Some(email) = &user.email {
-            if self
-                .repository
-                .find_by_email(email.as_str())
-                .await?
-                .is_some()
-            {
+        // Check if email already exists
+        if let Some(email) = &register_req.email {
+            let existing_user = Users::find()
+                .filter(users::Column::Email.eq(email))
+                .one(&self.db)
+                .await
+                .map_err(|e| AppError::Internal(e.to_string()))?;
+
+            if existing_user.is_some() {
                 return Err(AppError::email_already_exists(email));
             }
         }
 
-        self.repository.create(user).await
+        // Hash password
+        let password_hash =
+            hash_password(&register_req.password).map_err(|e| AppError::Internal(e.to_string()))?;
+
+        // Create user model
+        let now = chrono::Utc::now().with_timezone(&chrono::FixedOffset::east_opt(0).unwrap());
+        let user_id = uuid::Uuid::now_v7();
+
+        let active_model = users::ActiveModel {
+            id: Set(user_id),
+            username: Set(register_req.username.clone()),
+            email: Set(register_req.email.clone()),
+            display_name: Set(register_req.display_name.clone()),
+            password_hash: Set(password_hash),
+            role: Set("student".to_string()),
+            status: Set("active".to_string()),
+            created: Set(now),
+            updated: Set(now),
+        };
+
+        let user_model = active_model
+            .insert(&self.db)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        // Generate tokens
+        let email = user_model.email.as_deref().unwrap_or("");
+        let access_token = self
+            .jwt_util
+            .generate_access_token(user_model.id, email)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        let refresh_token = self
+            .jwt_util
+            .generate_refresh_token(user_model.id, email)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        Ok(AuthResponse {
+            access_token,
+            refresh_token,
+            user: user_model.into(),
+        })
     }
 
-    // Get user by id
-    pub async fn get_user_by_id(&self, id: Uuid) -> Result<User, AppError> {
-        self.repository
-            .find_by_id(id)
-            .await?
-            .ok_or_else(|| AppError::user_not_found(id))
+    /// Login user
+    pub async fn login(&self, login_req: LoginRequest) -> Result<AuthResponse, AppError> {
+        // Validate input
+        login_req.validate().map_err(AppError::from)?;
+
+        // Find user by username or email
+        let user_model = Users::find()
+            .filter(
+                Condition::any()
+                    .add(users::Column::Username.eq(&login_req.login))
+                    .add(users::Column::Email.eq(&login_req.login)),
+            )
+            .one(&self.db)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .ok_or_else(|| AppError::Unauthorized("Invalid credentials".to_string()))?;
+
+        // Verify password
+        if !verify_password(&login_req.password, &user_model.password_hash)
+            .map_err(|e| AppError::Internal(e.to_string()))?
+        {
+            return Err(AppError::Unauthorized("Invalid credentials".to_string()));
+        }
+
+        // Check user status
+        if user_model.status != "active" {
+            return Err(AppError::Forbidden(
+                "Account is suspended or inactive".to_string(),
+            ));
+        }
+
+        // Generate tokens
+        let email = user_model.email.as_deref().unwrap_or("");
+        let access_token = self
+            .jwt_util
+            .generate_access_token(user_model.id, email)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        let refresh_token = self
+            .jwt_util
+            .generate_refresh_token(user_model.id, email)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        Ok(AuthResponse {
+            access_token,
+            refresh_token,
+            user: user_model.into(),
+        })
     }
 
-    // Get user by email
-    pub async fn get_user_by_email(&self, email: &str) -> Result<User, AppError> {
-        self.repository
-            .find_by_email(email)
-            .await?
-            .ok_or_else(|| AppError::NotFound(format!("User with email {} not found", email)))
-    }
-
-    // Get user by username
-    pub async fn get_user_by_username(&self, username: &str) -> Result<User, AppError> {
-        self.repository
-            .find_by_username(username)
-            .await?
-            .ok_or_else(|| AppError::NotFound(format!("User with username {} not found", username)))
-    }
-
-    // Get all users
-    pub async fn get_all_users(&self) -> Result<Vec<User>, AppError> {
-        self.repository.find_all().await
-    }
-
-    // Update user
-    pub async fn update_user<T: Transformer<UpdateUserInput>>(
+    /// Refresh access token
+    pub async fn refresh_token(
         &self,
-        to_update_user_input: T,
-    ) -> Result<User, AppError> {
-        // Validate and transform input
-        let update_input = to_update_user_input.transform()?;
+        refresh_req: RefreshTokenRequest,
+    ) -> Result<RefreshTokenResponse, AppError> {
+        // Validate input
+        refresh_req.validate().map_err(AppError::from)?;
 
-        // Get user by id
-        let mut user = self.get_user_by_id(update_input.id).await?;
+        // Validate refresh token
+        let claims = self
+            .jwt_util
+            .verify_token(&refresh_req.token)
+            .map_err(|_| AppError::Unauthorized("Invalid refresh token".to_string()))?;
 
-        // Update user fields
-        if let Some(display_name) = update_input.display_name {
-            user.display_name = Some(display_name);
+        if claims.token_type != TokenType::Refresh {
+            return Err(AppError::Unauthorized("Invalid token type".to_string()));
         }
 
-        if let Some(username) = update_input.username {
-            // Check if new username conflicts
-            if let Some(existing) = self.repository.find_by_username(&username[..]).await? {
-                if existing.id != update_input.id {
-                    return Err(AppError::username_already_exists(&username));
-                }
-            }
-            user.username = Some(username);
+        let user_id = claims
+            .sub
+            .parse::<uuid::Uuid>()
+            .map_err(|_| AppError::Unauthorized("Invalid user ID in token".to_string()))?;
+
+        let user = Users::find_by_id(user_id)
+            .one(&self.db)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .ok_or_else(|| AppError::Unauthorized("User not found".to_string()))?;
+
+        if user.status != "active" && user.status != "pending" {
+            return Err(AppError::Forbidden(
+                "Account is suspended or inactive".to_string(),
+            ));
         }
 
-        if let Some(email) = update_input.email {
-            if !email.trim().is_empty() {
-                // Check if new email conflicts
-                if let Some(existing) = self.repository.find_by_email(email.as_str()).await? {
-                    if existing.id != update_input.id {
-                        return Err(AppError::email_already_exists(&email));
-                    }
-                }
-                user.email = Some(email);
-            } else {
-                // If email is provided as empty string, set it to empty
-                user.email = Some(String::new());
-            }
-        }
+        // Generate new access token
+        let email = user.email.as_deref().unwrap_or("");
+        let access_token = self
+            .jwt_util
+            .generate_access_token(user_id, email)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
 
-        if let Some(role) = update_input.role {
-            user.role = role;
-        }
-
-        if let Some(status) = update_input.status {
-            user.status = status;
-        }
-
-        user.updated = chrono::Utc::now();
-
-        // Update user in database
-        self.repository.update(user).await
+        Ok(RefreshTokenResponse { access_token })
     }
 
-    // Delete user
-    pub async fn delete_user(&self, id: Uuid) -> Result<(), AppError> {
-        // Check if user exists first
-        self.get_user_by_id(id).await?;
+    /// Verify access token and return user
+    pub async fn verify_token(&self, token: &str) -> Result<UserModel, AppError> {
+        let claims = self
+            .jwt_util
+            .verify_token(token)
+            .map_err(|_| AppError::Unauthorized("Invalid access token".to_string()))?;
 
-        if !self.repository.delete(id).await? {
-            return Err(AppError::user_not_found(id));
+        if claims.token_type != TokenType::Access {
+            return Err(AppError::Unauthorized("Invalid token type".to_string()));
         }
-        Ok(())
+
+        let user_id = claims
+            .sub
+            .parse::<uuid::Uuid>()
+            .map_err(|_| AppError::Unauthorized("Invalid user ID in token".to_string()))?;
+
+        let user_model = Users::find_by_id(user_id)
+            .one(&self.db)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .ok_or_else(|| AppError::Unauthorized("User not found".to_string()))?;
+
+        if user_model.status != "active" && user_model.status != "pending" {
+            return Err(AppError::Forbidden(
+                "Account is suspended or inactive".to_string(),
+            ));
+        }
+
+        Ok(user_model)
     }
 }
