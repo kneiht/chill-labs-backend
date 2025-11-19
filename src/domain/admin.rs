@@ -1,29 +1,18 @@
-// Admin CRUD routes for all entities
-// Add admin_entity!(entity_name) to get full CRUD at /admin/entity_name
-
 use crate::AppState;
 use axum::Router;
 use std::sync::Arc;
 
-use crate::{admin_entity, admin_routes};
-
-// Generate admin CRUD for each entity
-admin_entity!(notes);
-admin_entity!(users);
-admin_entity!(lessons);
-admin_entity!(sentences);
-admin_entity!(words);
-admin_entity!(word_sentences);
+use crate::entities::users;
+use crud_macros::make_crud_routes;
 
 // Combine all admin routes
 pub fn router() -> Router<Arc<AppState>> {
-    admin_routes!(
-        notes,
-        users,
-        lessons,
-        sentences,
-        vocabs,
-        words,
-        word_sentences
-    )
+    let user_routes = make_crud_routes!(
+        entity: users::Entity,
+        model: users::Model,
+        active_model: users::ActiveModel,
+        path: "/users"
+    );
+
+    Router::new().nest("/admin", user_routes)
 }
