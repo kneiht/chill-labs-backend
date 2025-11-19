@@ -1,5 +1,5 @@
 env "dev" {
-  src = "file://schema.sql"
+  src = "file://schema"
   dev = "docker://postgres/15/dev?search_path=public"
   
   migration {
