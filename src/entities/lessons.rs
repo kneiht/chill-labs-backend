@@ -15,9 +15,9 @@ pub struct Model {
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
     pub background: Option<String>,
+    pub word_sentences: Option<Vec<Uuid>>,
     pub created: DateTimeWithTimeZone,
     pub updated: DateTimeWithTimeZone,
-    pub word_sentences: Option<Vec<Uuid>>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

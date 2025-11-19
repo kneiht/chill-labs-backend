@@ -4,6 +4,5 @@ pub use super::lessons::Entity as Lessons;
 pub use super::notes::Entity as Notes;
 pub use super::sentences::Entity as Sentences;
 pub use super::users::Entity as Users;
-pub use super::vocabs::Entity as Vocabs;
 pub use super::word_sentences::Entity as WordSentences;
 pub use super::words::Entity as Words;

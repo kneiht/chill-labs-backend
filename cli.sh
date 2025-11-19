@@ -192,6 +192,16 @@ db_atlas_status() {
     echo -e "${GREEN}✓ Atlas migration status check complete${NC}"
 }
 
+db_seaorm_generate() {
+    _ensure_env_var "DATABASE_URL" || return 1
+    echo -e "${CYAN}Generating SeaORM entities from database ($DATABASE_URL)...${NC}"
+    (cd "$BACKEND_DIR" && sea-orm-cli generate entity \
+        -u "$DATABASE_URL" \
+        -o src/entities/ \
+        --with-serde both)
+    echo -e "${GREEN}✓ SeaORM entities generated successfully${NC}"
+}
+
 # --- Deployment ---
 _get_deploy_params() {
     # Use existing environment variables if set, otherwise prompt with defaults
@@ -342,6 +352,7 @@ show_db_menu() {
             "SQLx: Apply pending migrations (DEV DB)"
             "SQLx: Apply pending migrations (TEST DB)"
             "Atlas: Show migration status"
+            "SeaORM: Generate entities from database"
         )
         COLUMNS=1
         PS3="Database action? (0: Exit) "
@@ -353,6 +364,7 @@ show_db_menu() {
                 4) db_apply; break ;;
                 5) db_apply_test; break ;;
                 6) db_atlas_status; break ;;
+                7) db_seaorm_generate; break ;;
                 0) return ;;
                 *) echo -e "${RED}Invalid option $REPLY${NC}" ;;
             esac

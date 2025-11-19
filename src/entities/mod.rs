@@ -6,6 +6,5 @@ pub mod lessons;
 pub mod notes;
 pub mod sentences;
 pub mod users;
-pub mod vocabs;
 pub mod word_sentences;
 pub mod words;

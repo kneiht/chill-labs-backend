@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::entities::users::Model as UserModel;
+
 // Role enum
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Role {
@@ -88,8 +90,8 @@ pub struct UserInfo {
     pub status: UserStatus,
 }
 
-impl From<crate::entities::users::Model> for UserInfo {
-    fn from(user: crate::entities::users::Model) -> Self {
+impl From<UserModel> for UserInfo {
+    fn from(user: UserModel) -> Self {
         Self {
             id: user.id.to_string(),
             display_name: user.display_name.unwrap_or_default(),

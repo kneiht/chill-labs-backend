@@ -12,7 +12,6 @@ admin_entity!(notes);
 admin_entity!(users);
 admin_entity!(lessons);
 admin_entity!(sentences);
-admin_entity!(vocabs);
 admin_entity!(words);
 admin_entity!(word_sentences);
 
