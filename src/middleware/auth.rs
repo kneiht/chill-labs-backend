@@ -61,6 +61,7 @@ fn extract_bearer_token(request: &Request) -> Option<String> {
 }
 
 /// Extension trait to get user from request extensions
+#[allow(unused)]
 pub trait RequestUserExt {
     fn user(&self) -> Option<&User>;
 }

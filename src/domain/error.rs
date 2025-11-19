@@ -131,6 +131,7 @@ impl From<crate::domain::user::model::UserValidationError> for AppError {
 }
 
 /// Extension trait to convert AppError to Response
+#[allow(unused)]
 pub trait ToResponse<T> {
     fn to_response(self, success_message: &str) -> Response<T>;
     fn to_response_created(self, success_message: &str) -> Response<T>;
@@ -281,6 +282,7 @@ impl<T> ToResponse<T> for Result<T, AppError> {
 }
 
 /// Helper functions for common error scenarios
+#[allow(unused)]
 impl AppError {
     pub fn user_not_found(id: Uuid) -> Self {
         AppError::NotFound(format!("User with id {} not found", id))

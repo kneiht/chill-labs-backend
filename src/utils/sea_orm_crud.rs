@@ -34,6 +34,7 @@ pub struct PaginatedResponse<T> {
 macro_rules! admin_entity {
     ($entity_name:ident) => {
         paste::paste! {
+            #[allow(unused)]
             pub mod [<$entity_name _admin>] {
                 use super::*;
                 use axum::{

@@ -51,6 +51,7 @@ pub struct Response<T> {
     pub error: Option<String>,
 }
 
+#[allow(unused)]
 impl<T> Response<T> {
     pub fn success(data: T, message: &str, status: SuccessType) -> Self {
         Self {
