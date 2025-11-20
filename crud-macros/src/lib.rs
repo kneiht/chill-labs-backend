@@ -166,17 +166,10 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
 
                 match active_model {
                     Ok(mut am) => {
-                        let res = am.save(&state.db).await;
+                        let res = am.insert(&state.db).await;
                         match res {
                             Ok(model) => {
-                                // We need to convert ActiveModel back to Model to serialize it nicely,
-                                // or just return the ID?
-                                // `save` returns ActiveModel.
-                                // We can try_into_model
-                                match model.try_into_model() {
-                                    Ok(m) => axum::Json(serde_json::json!(m)),
-                                    Err(e) => axum::Json(serde_json::json!({ "error": "Failed to convert to model" })),
-                                }
+                                axum::Json(serde_json::json!(model))
                             },
                             Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
                         }
