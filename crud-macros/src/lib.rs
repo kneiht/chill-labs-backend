@@ -1,4 +1,6 @@
 use proc_macro::TokenStream;
+
+#[allow(unused_imports)]
 use quote::{format_ident, quote};
 use syn::{
     parse::{Parse, ParseStream},
@@ -49,6 +51,8 @@ impl Parse for CrudInput {
     }
 }
 
+#[allow(unused_imports)]
+#[allow(unused_variables)]
 #[proc_macro]
 pub fn make_crud_routes(input: TokenStream) -> TokenStream {
     let CrudInput {
