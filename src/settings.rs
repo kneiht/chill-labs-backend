@@ -51,6 +51,14 @@ pub struct Jwt {
     pub refresh_token_expiration_hours: Option<i64>,
 }
 
+// Define the Admin struct to hold the admin user configuration
+#[derive(Debug, Deserialize, Default, Clone)]
+#[allow(unused)]
+pub struct Admin {
+    pub email: Option<String>,
+    pub password: Option<String>,
+}
+
 // Define the Settings struct to hold all the configuration settings
 #[derive(Debug, Deserialize, Default, Clone)]
 #[allow(unused)]
@@ -65,6 +73,8 @@ pub struct Settings {
     pub server: Server,
     #[serde(default)]
     pub jwt: Jwt,
+    #[serde(default)]
+    pub admin: Admin,
 }
 
 // Implement the Settings struct
