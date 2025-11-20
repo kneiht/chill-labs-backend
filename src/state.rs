@@ -1,6 +1,5 @@
 use crate::entities::users;
 use crate::utils::password::hash_password;
-use anyhow::Context;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectOptions, DatabaseConnection, EntityTrait, QueryFilter,
     Set,
@@ -30,16 +29,11 @@ impl AppState {
         seed_admin_user(&db, settings).await?;
 
         // Initialize JWT secret
-        let jwt_secret = settings
-            .jwt
-            .secret
-            .clone()
-            .unwrap_or_else(|| "default_secret_change_in_production".to_string());
+        let jwt_secret = settings.jwt.secret.clone();
 
         // Initialize JWT expiration hours
-        let access_token_expiration_hours = settings.jwt.access_token_expiration_hours.unwrap_or(1);
-        let refresh_token_expiration_hours =
-            settings.jwt.refresh_token_expiration_hours.unwrap_or(720);
+        let access_token_expiration_hours = settings.jwt.access_token_expiration_hours;
+        let refresh_token_expiration_hours = settings.jwt.refresh_token_expiration_hours;
 
         // Initialize user service
         let user_service = UserService::new(
@@ -60,11 +54,7 @@ impl AppState {
 
 /// Initialize the Database connection
 async fn init_db(settings: &Settings) -> anyhow::Result<DatabaseConnection> {
-    let url = settings
-        .database
-        .url
-        .clone()
-        .context("Database URL is not set")?;
+    let url = settings.database.url.clone();
 
     let mut opt = ConnectOptions::new(url);
     opt.max_connections(100)
@@ -87,34 +77,24 @@ async fn init_db(settings: &Settings) -> anyhow::Result<DatabaseConnection> {
 }
 
 async fn seed_admin_user(db: &DatabaseConnection, settings: &Settings) -> anyhow::Result<()> {
-    // Get admin email from environment or use default
-    let email = settings
-        .admin
-        .email
-        .clone()
-        .unwrap_or_else(|| "admin@example.com".to_string());
-
-    // Get admin password from environment or use default
-    let password = settings
-        .admin
-        .password
-        .clone()
-        .unwrap_or_else(|| "admin123".to_string());
+    // Get admin email and password from settings (required fields)
+    let email = &settings.admin.email;
+    let password = &settings.admin.password;
 
     let existing_user = users::Entity::find()
-        .filter(users::Column::Email.eq(&email))
+        .filter(users::Column::Email.eq(email))
         .one(db)
         .await?;
 
     if existing_user.is_none() {
         tracing::info!("Seeding admin user: {}", email);
-        let password_hash = hash_password(&password)?;
+        let password_hash = hash_password(password)?;
         let now = chrono::Utc::now().with_timezone(&chrono::FixedOffset::east_opt(0).unwrap());
 
         let user = users::ActiveModel {
             id: Set(uuid::Uuid::now_v7()),
             username: Set(Some("admin".to_string())),
-            email: Set(Some(email)),
+            email: Set(Some(email.clone())),
             display_name: Set(Some("Admin User".to_string())),
             password_hash: Set(password_hash),
             role: Set("admin".to_string()),

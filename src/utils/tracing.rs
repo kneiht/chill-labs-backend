@@ -8,21 +8,11 @@ use crate::settings::Settings;
 
 // This function initializes the tracing subscriber with the specified settings.
 pub fn init_tracing(settings: &Settings) -> anyhow::Result<WorkerGuard> {
-    // Default level: INFO. Can be overridden by `settings.logging.log_level` or RUST_LOG env var.
-    let default_log_level = "info".to_string();
-    let log_level = settings
-        .logging
-        .log_level
-        .clone()
-        .unwrap_or_else(|| std::env::var("RUST_LOG").unwrap_or(default_log_level));
+    // Get log level from settings
+    let log_level = settings.logging.log_level.clone();
 
-    // Default format: PRETTY. Can be overridden by `settings.logging.log_format`.
-    let default_log_format = "pretty".to_string();
-    let log_format = settings
-        .logging
-        .log_format
-        .clone()
-        .unwrap_or(default_log_format);
+    // Get log format from settings
+    let log_format = settings.logging.log_format.clone();
 
     // Configure the writer: Non-blocking stdout
     // In production, logs often go to stdout/stderr and are collected by infrastructure (like Kubernetes).

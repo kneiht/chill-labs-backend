@@ -93,18 +93,13 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
         .layer(cors);
 
     // Server host ip
-    let host = state
-        .settings
-        .server
-        .host
-        .clone()
-        .unwrap_or_else(|| "127.0.0.1".to_string());
+    let host = state.settings.server.host.clone();
 
     // Check if host is valid ip
     let host_ip = host.parse::<IpAddr>().context("Invalid host IP")?;
 
     // Server port ip
-    let port = state.settings.server.port.unwrap_or(3000);
+    let port = state.settings.server.port;
 
     // Server address
     let addr = SocketAddr::new(host_ip, port);

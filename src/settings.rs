@@ -2,27 +2,27 @@ use config::{Config, Environment};
 use serde::Deserialize;
 
 // Define the Database struct to hold the database configuration
-#[derive(Debug, Deserialize, Default, Clone, PartialEq)]
+#[derive(Debug, Deserialize, Clone, PartialEq)]
 #[allow(unused)]
 pub struct Database {
-    pub url: Option<String>,
-    pub migrate_on_startup: Option<bool>,
+    pub url: String,
+    pub migrate_on_startup: bool,
 }
 
 // Define the Logging struct to hold the logging configuration
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Logging {
-    pub log_level: Option<String>, // e.g., "debug", "info", "warn", "error", "trace" or RUST_LOG directives
-    pub log_format: Option<String>, // e.g., "pretty", "json"
-    pub log_file: Option<String>,
+    pub log_level: String, // e.g., "debug", "info", "warn", "error", "trace" or RUST_LOG directives
+    pub log_format: String, // e.g., "pretty", "json"
+    pub log_file: Option<String>, // Optional - can be None if logging to stdout
 }
 
 // Define the ConfigInfo struct to hold the configuration information
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct ConfigInfo {
-    pub env_prefix: Option<String>, // e.g., "APP"
+    pub env_prefix: String, // e.g., "APP"
 }
 
 // Define an enum for Server Environment
@@ -34,46 +34,40 @@ pub enum ServerEnv {
 }
 
 // Define the Server struct to hold the server configuration
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Server {
-    pub env: Option<ServerEnv>, // e.g., "dev", "prod"
-    pub host: Option<String>,
-    pub port: Option<u16>,
+    pub env: ServerEnv, // e.g., "dev", "prod"
+    pub host: String,
+    pub port: u16,
 }
 
 // Define the Jwt struct to hold the JWT configuration
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Jwt {
-    pub secret: Option<String>,
-    pub access_token_expiration_hours: Option<i64>,
-    pub refresh_token_expiration_hours: Option<i64>,
+    pub secret: String,
+    pub access_token_expiration_hours: i64,
+    pub refresh_token_expiration_hours: i64,
 }
 
 // Define the Admin struct to hold the admin user configuration
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Admin {
-    pub email: Option<String>,
-    pub password: Option<String>,
+    pub email: String,
+    pub password: String,
 }
 
 // Define the Settings struct to hold all the configuration settings
-#[derive(Debug, Deserialize, Default, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Settings {
-    #[serde(default)]
     pub database: Database,
-    #[serde(default)]
     pub logging: Logging,
-    #[serde(default)]
     pub config: ConfigInfo,
-    #[serde(default)]
     pub server: Server,
-    #[serde(default)]
     pub jwt: Jwt,
-    #[serde(default)]
     pub admin: Admin,
 }
 
