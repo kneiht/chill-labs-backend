@@ -434,8 +434,14 @@
           this.editingItem = item;
           this.formData = item ? JSON.parse(JSON.stringify(item)) : {}; // Deep copy to avoid Proxy issues
           // Clear password for user edit
-          if (this.currentEntity === 'users' && item) {
-            this.formData.password_hash = '';
+          if (this.currentEntity === 'users') {
+            if (item) {
+              this.formData.password_hash = '';
+            } else {
+              // Set defaults for new user
+              this.formData.role = 'student';
+              this.formData.status = 'active';
+            }
           }
           this.isModalOpen = true;
           console.log('isModalOpen:', this.isModalOpen);
