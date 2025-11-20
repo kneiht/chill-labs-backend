@@ -272,27 +272,64 @@
         // Entity Configuration (Fields for Form & Table)
         entityConfig: {
           users: {
-            columns: ['id', 'username', 'email', 'role', 'status', 'created'],
+            columns: ['id', 'username', 'email', 'display_name', 'role', 'status', 'created'],
             fields: [
               { name: 'username', label: 'Username', type: 'text' },
               { name: 'email', label: 'Email', type: 'email' },
               { name: 'display_name', label: 'Display Name', type: 'text' },
-              { name: 'password', label: 'Password (Leave blank to keep)', type: 'password' },
+              { name: 'password_hash', label: 'Password (Leave blank to keep)', type: 'password' },
               { name: 'role', label: 'Role', type: 'select', options: ['admin', 'teacher', 'student'] },
               { name: 'status', label: 'Status', type: 'select', options: ['active', 'pending', 'suspended'] }
             ]
           },
           notes: {
-            columns: ['id', 'title', 'owner_id', 'created_at'],
+            columns: ['id', 'user_id', 'title', 'created'],
             fields: [
+              { name: 'user_id', label: 'User ID (UUID)', type: 'text' },
               { name: 'title', label: 'Title', type: 'text' },
-              { name: 'content', label: 'Content', type: 'textarea' },
-              { name: 'owner_id', label: 'Owner ID (UUID)', type: 'text' }
+              { name: 'content', label: 'Content', type: 'textarea' }
+            ]
+          },
+          lessons: {
+            columns: ['id', 'user_id', 'course', 'unit', 'lesson', 'created'],
+            fields: [
+              { name: 'user_id', label: 'User ID (UUID)', type: 'text' },
+              { name: 'course', label: 'Course', type: 'text' },
+              { name: 'unit', label: 'Unit', type: 'text' },
+              { name: 'lesson', label: 'Lesson', type: 'text' },
+              { name: 'description', label: 'Description', type: 'textarea' },
+              { name: 'background', label: 'Background', type: 'text' }
+            ]
+          },
+          sentences: {
+            columns: ['id', 'sentence', 'vietnamese_translation', 'created'],
+            fields: [
+              { name: 'sentence', label: 'Sentence', type: 'textarea' },
+              { name: 'vietnamese_translation', label: 'Vietnamese Translation', type: 'textarea' },
+              { name: 'audio_url', label: 'Audio URL', type: 'text' }
+            ]
+          },
+          words: {
+            columns: ['id', 'word', 'phonics', 'part_of_speech', 'vietnamese_meaning', 'created'],
+            fields: [
+              { name: 'word', label: 'Word', type: 'text' },
+              { name: 'phonics', label: 'Phonics', type: 'text' },
+              { name: 'part_of_speech', label: 'Part of Speech', type: 'text' },
+              { name: 'vietnamese_meaning', label: 'Vietnamese Meaning', type: 'textarea' },
+              { name: 'image_url', label: 'Image URL', type: 'text' },
+              { name: 'word_audio_url', label: 'Word Audio URL', type: 'text' }
+            ]
+          },
+          word_sentences: {
+            columns: ['id', 'word_id', 'sentence_id', 'created'],
+            fields: [
+              { name: 'word_id', label: 'Word ID (UUID)', type: 'text' },
+              { name: 'sentence_id', label: 'Sentence ID (UUID)', type: 'text' }
             ]
           },
           // Default fallback for others
           default: {
-            columns: ['id', 'name', 'title', 'created_at'],
+            columns: ['id', 'name', 'title', 'created'],
             fields: [
               { name: 'title', label: 'Title/Name', type: 'text' },
               { name: 'content', label: 'Content', type: 'textarea' }
@@ -399,7 +436,7 @@
           this.formData = item ? JSON.parse(JSON.stringify(item)) : {}; // Deep copy to avoid Proxy issues
           // Clear password for user edit
           if (this.currentEntity === 'users' && item) {
-            this.formData.password = '';
+            this.formData.password_hash = '';
           }
           this.isModalOpen = true;
           console.log('isModalOpen:', this.isModalOpen);
@@ -423,8 +460,8 @@
           const method = this.editingItem ? 'PUT' : 'POST';
 
           // Clean up empty password for users
-          if (this.currentEntity === 'users' && !this.formData.password) {
-            delete this.formData.password;
+          if (this.currentEntity === 'users' && !this.formData.password_hash) {
+            delete this.formData.password_hash;
           }
 
           try {

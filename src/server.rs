@@ -68,11 +68,11 @@ pub async fn serve(state: &AppState) -> anyhow::Result<()> {
     // Protected routes (require authentication)
     let protected_routes = Router::new()
         .merge(admin::router())
-        .with_state(shared_state.clone())
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth_middleware,
-        ));
+        ))
+        .with_state(shared_state.clone());
 
     // Public routes
     let app = Router::new()
