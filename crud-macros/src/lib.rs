@@ -157,6 +157,22 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                     if !obj.contains_key("updated") {
                         obj.insert("updated".to_string(), serde_json::Value::String(now));
                     }
+
+                    // Password hashing logic
+                    if #path_str == "/users" {
+                        if let Some(password_val) = obj.get("password_hash") {
+                            if let Some(password) = password_val.as_str() {
+                                if !password.is_empty() && !password.starts_with("$argon2") {
+                                     match crate::utils::password::hash_password(password) {
+                                         Ok(hashed) => {
+                                             obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
+                                         },
+                                         Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })),
+                                     }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 println!("Payload before from_json: {:?}", payload);
@@ -187,6 +203,25 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                 if let Some(obj) = payload.as_object_mut() {
                      let now = chrono::Utc::now().to_rfc3339();
                      obj.insert("updated".to_string(), serde_json::Value::String(now));
+
+                    // Password hashing logic
+                    if #path_str == "/users" {
+                        if let Some(password_val) = obj.get("password_hash") {
+                            if let Some(password) = password_val.as_str() {
+                                if !password.is_empty() && !password.starts_with("$argon2") {
+                                     match crate::utils::password::hash_password(password) {
+                                         Ok(hashed) => {
+                                             obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
+                                         },
+                                         Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })),
+                                     }
+                                } else if password.is_empty() {
+                                    // If password is empty, remove it from payload so it doesn't overwrite existing hash
+                                    obj.remove("password_hash");
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // First find the item
