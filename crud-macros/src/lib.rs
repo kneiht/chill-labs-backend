@@ -58,19 +58,68 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
         path,
     } = parse_macro_input!(input as CrudInput);
 
-    // Generate unique names for the handlers to avoid collisions if multiple macros are used in the same file
-    // Actually, we can just put them in a module or give them unique names based on the entity.
-    // Let's use a module for cleanliness.
-
-    // We need to convert the path to a string for the router
     let path_str = path.value();
 
-    // Extract the last segment of the entity path to use as a base for naming
-    // e.g., if entity is `crate::entities::users::Entity`, we want `users`
-    // This is a bit complex to do robustly in a macro without more info,
-    // but we can generate a module name based on the path or just use a fixed structure if we return a block.
+    // Conditional logic for password hashing
+    let create_password_logic = if path_str == "/users" {
+        quote! {
+            if let Some(obj) = payload.as_object_mut() {
+                if let Some(password_val) = obj.get("password_hash") {
+                    if let Some(password) = password_val.as_str() {
+                        if !password.is_empty() && !password.starts_with("$argon2") {
+                             match crate::utils::password::hash_password(password) {
+                                 Ok(hashed) => {
+                                     obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
+                                 },
+                                 Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })).into_response(),
+                             }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
 
-    // Let's generate a block that returns the router.
+    let update_password_logic = if path_str == "/users" {
+        quote! {
+            if let Some(obj) = payload.as_object_mut() {
+                let mut should_hash = false;
+                let mut use_existing = false;
+
+                if let Some(password_val) = obj.get("password_hash") {
+                    if let Some(password) = password_val.as_str() {
+                        if password.is_empty() {
+                            use_existing = true;
+                        } else if !password.starts_with("$argon2") {
+                            should_hash = true;
+                        }
+                    }
+                } else {
+                    // If field is missing entirely, we might want to use existing too,
+                    // but set_from_json might complain if we don't put it back.
+                    // However, if it's missing from JSON, set_from_json usually errors for required fields.
+                    // So let's assume we need to put it there.
+                    use_existing = true;
+                }
+
+                if use_existing {
+                     obj.insert("password_hash".to_string(), serde_json::Value::String(model.password_hash.clone()));
+                } else if should_hash {
+                     let password = obj.get("password_hash").unwrap().as_str().unwrap();
+                     match crate::utils::password::hash_password(password) {
+                         Ok(hashed) => {
+                             obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
+                         },
+                         Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })).into_response(),
+                     }
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
 
     let expanded = quote! {
         {
@@ -78,6 +127,7 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                 extract::{Path, State, Query},
                 routing::{get, post, put, delete},
                 Json, Router,
+                response::IntoResponse,
             };
             use sea_orm::{
                 ActiveModelTrait, EntityTrait, IntoActiveModel, Set, TryIntoModel, ActiveValue,
@@ -91,7 +141,7 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
             async fn list_items(
                 State(state): State<Arc<crate::AppState>>,
                 Query(params): Query<std::collections::HashMap<String, String>>,
-            ) -> impl axum::response::IntoResponse {
+            ) -> impl IntoResponse {
                 // Simple pagination
                 let page = params.get("page").and_then(|p| p.parse::<u64>().ok()).unwrap_or(1);
                 let per_page = params.get("per_page").and_then(|p| p.parse::<u64>().ok()).unwrap_or(10);
@@ -114,11 +164,10 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                                  "total": total,
                                  "total_pages": total_pages
                              }
-                         }))
+                         })).into_response()
                     },
                     Err(e) => {
-                        // TODO: Better error handling
-                        axum::Json(serde_json::json!({ "error": e.to_string() }))
+                        axum::Json(serde_json::json!({ "error": e.to_string() })).into_response()
                     }
                 }
             }
@@ -126,22 +175,22 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
             async fn get_item(
                 State(state): State<Arc<crate::AppState>>,
                 Path(id): Path<uuid::Uuid>,
-            ) -> impl axum::response::IntoResponse {
+            ) -> impl IntoResponse {
                 let item = <#entity>::find_by_id(id)
                     .one(&state.db)
                     .await;
 
                 match item {
-                    Ok(Some(item)) => axum::Json(serde_json::json!(item)),
-                    Ok(None) => axum::Json(serde_json::json!({ "error": "Not found" })),
-                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                    Ok(Some(item)) => axum::Json(serde_json::json!(item)).into_response(),
+                    Ok(None) => axum::Json(serde_json::json!({ "error": "Not found" })).into_response(),
+                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                 }
             }
 
             async fn create_item(
                 State(state): State<Arc<crate::AppState>>,
                 Json(mut payload): Json<Value>,
-            ) -> impl axum::response::IntoResponse {
+            ) -> impl IntoResponse {
                 // Inject ID and timestamps if missing
                 if let Some(obj) = payload.as_object_mut() {
                     if !obj.contains_key("id") {
@@ -157,23 +206,9 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                     if !obj.contains_key("updated") {
                         obj.insert("updated".to_string(), serde_json::Value::String(now));
                     }
-
-                    // Password hashing logic
-                    if #path_str == "/users" {
-                        if let Some(password_val) = obj.get("password_hash") {
-                            if let Some(password) = password_val.as_str() {
-                                if !password.is_empty() && !password.starts_with("$argon2") {
-                                     match crate::utils::password::hash_password(password) {
-                                         Ok(hashed) => {
-                                             obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
-                                         },
-                                         Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })),
-                                     }
-                                }
-                            }
-                        }
-                    }
                 }
+
+                #create_password_logic
 
                 println!("Payload before from_json: {:?}", payload);
 
@@ -185,12 +220,12 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                         let res = am.insert(&state.db).await;
                         match res {
                             Ok(model) => {
-                                axum::Json(serde_json::json!(model))
+                                axum::Json(serde_json::json!(model)).into_response()
                             },
-                            Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                            Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                         }
                     },
-                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                 }
             }
 
@@ -198,30 +233,11 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                 State(state): State<Arc<crate::AppState>>,
                 Path(id): Path<uuid::Uuid>,
                 Json(mut payload): Json<Value>,
-            ) -> impl axum::response::IntoResponse {
+            ) -> impl IntoResponse {
                 // Inject updated timestamp
                 if let Some(obj) = payload.as_object_mut() {
                      let now = chrono::Utc::now().to_rfc3339();
                      obj.insert("updated".to_string(), serde_json::Value::String(now));
-
-                    // Password hashing logic
-                    if #path_str == "/users" {
-                        if let Some(password_val) = obj.get("password_hash") {
-                            if let Some(password) = password_val.as_str() {
-                                if !password.is_empty() && !password.starts_with("$argon2") {
-                                     match crate::utils::password::hash_password(password) {
-                                         Ok(hashed) => {
-                                             obj.insert("password_hash".to_string(), serde_json::Value::String(hashed));
-                                         },
-                                         Err(e) => return axum::Json(serde_json::json!({ "error": format!("Failed to hash password: {}", e) })),
-                                     }
-                                } else if password.is_empty() {
-                                    // If password is empty, remove it from payload so it doesn't overwrite existing hash
-                                    obj.remove("password_hash");
-                                }
-                            }
-                        }
-                    }
                 }
 
                 // First find the item
@@ -231,6 +247,9 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
 
                 match item {
                     Ok(Some(model)) => {
+                        // Inject password logic here, where we have access to `model`
+                        #update_password_logic
+
                         let mut active_model: #active_model = model.into();
 
                         // Update from JSON
@@ -241,25 +260,25 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                                 match res {
                                     Ok(updated_am) => {
                                         match updated_am.try_into_model() {
-                                            Ok(m) => axum::Json(serde_json::json!(m)),
-                                            Err(_) => axum::Json(serde_json::json!({ "error": "Failed to convert to model" })),
+                                            Ok(m) => axum::Json(serde_json::json!(m)).into_response(),
+                                            Err(_) => axum::Json(serde_json::json!({ "error": "Failed to convert to model" })).into_response(),
                                         }
                                     },
-                                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                                 }
                             },
-                            Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                            Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                         }
                     },
-                    Ok(None) => axum::Json(serde_json::json!({ "error": "Not found" })),
-                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                    Ok(None) => axum::Json(serde_json::json!({ "error": "Not found" })).into_response(),
+                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                 }
             }
 
             async fn delete_item(
                 State(state): State<Arc<crate::AppState>>,
                 Path(id): Path<uuid::Uuid>,
-            ) -> impl axum::response::IntoResponse {
+            ) -> impl IntoResponse {
                 let res = <#entity>::delete_by_id(id)
                     .exec(&state.db)
                     .await;
@@ -267,12 +286,12 @@ pub fn make_crud_routes(input: TokenStream) -> TokenStream {
                 match res {
                     Ok(res) => {
                         if res.rows_affected == 0 {
-                             axum::Json(serde_json::json!({ "error": "Not found" }))
+                             axum::Json(serde_json::json!({ "error": "Not found" })).into_response()
                         } else {
-                             axum::Json(serde_json::json!({ "message": "Deleted successfully" }))
+                             axum::Json(serde_json::json!({ "message": "Deleted successfully" })).into_response()
                         }
                     },
-                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })),
+                    Err(e) => axum::Json(serde_json::json!({ "error": e.to_string() })).into_response(),
                 }
             }
 
